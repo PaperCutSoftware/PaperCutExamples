@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# Lists the current balance for all shared accounts
+# Works on Mac and Linux (or Cygwin on Windows)
+# Should handle as many accounts as you want. Hence curious use of xargs
+
+server-command list-shared-accounts | \
+xargs -I {} echo 'printf "%s\t:\t%+f\n" {} $(server-command get-shared-account-account-balance {})' | \
+bash
+
