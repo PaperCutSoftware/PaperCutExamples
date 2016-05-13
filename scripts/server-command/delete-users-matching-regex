@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# Deletes all user accounts in PaperCut that match a specific regular expression
+# Use with care!
+# Works on Mac and Linux (or Cygwin on Windows)
+
+REGEX=${1:-'..*'}  # Provide a default that matches all account names
+
+if [[ $(( $(server-command list-user-accounts | grep "$REGEX" | wc -l ) )) == 0 ]] ; then
+  echo "No user accounts match \"$1\"."
+else
+  server-command list-user-accounts | grep "$REGEX"
+
+  echo
+  read -p "About to delete this list of users. Are you sure? [N/y] " -r < /dev/tty
+
+  if [[ $REPLY =~ ^[Yy]$ ]] ; then
+    server-command list-user-accounts | grep "$REGEX" | xargs -n 1 server-command delete-existing-user
+  fi
+fi
+
