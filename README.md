@@ -1,5 +1,7 @@
 # PaperCutExamples
 
+[![Join the chat at https://gitter.im/PaperCutSoftware/PaperCutExamples](https://badges.gitter.im/PaperCutSoftware/PaperCutExamples.svg)](https://gitter.im/PaperCutSoftware/PaperCutExamples?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This repository contains various examples of scripts and other things that PaperCut users may find useful.
 
 PaperCut is a powerful Copier and Printer management system. More details at http://papercut.com/
