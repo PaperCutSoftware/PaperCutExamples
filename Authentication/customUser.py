@@ -1,88 +1,119 @@
-#!/usr/bin/env python3
+#!/usr/bin/env /usr/local/bin/python3
+
 
 #  A trivial example of a custome user program for use with PaperCut NG or MF
 #  See http://www.papercut.com/kb/Main/CaseStudyCustomUserSyncIntegration
 #
-#  Uses Python 3 to get access to arrays and be X platform.
+#  Uses Python 3 to get access to arrays and be X platform. Make sure that the
+#  Python intepreter is on the path for the PaperCut service account or specify
+#  the path explicitly.
+
+#  N.B. This example is for illistrative purposes only. Any production solution
+#  needs to be optomised for performance.
 
 import sys
 import logging
 
+userDatabase = {
+    "john": {"fullname":"John Smith",   "email":"johns@here.com",  "dept":"Accounts",  "office":"Melbourne",   "cardno":"1234", "password":"password1"},
+    "jane": {"fullname":"Jane Rodgers", "email":"janer@here.com",  "dept":"Sales",     "office":"Docklands",   "cardno":"5678", "password":"password2"},
+    "ahmed":{"fullname":"Ahmed Yakubb", "email":"ahmedy@here.com", "dept":"Marketing", "office":"Home Office", "cardno":"4321", "password":"password3"},
+}
 
-userDatabase = [
-    ["john","John Smith","johns@here.com","Accounts","Melbourne","1234"],
-    ["jane","Jane Rodgers","jhanr@here.com","Sales","Docklands","5678"],
-    ["ahmed","Ahmed Yakubb","ahmedy@here.com","Marketing","Home Office","4321"],
-]
-
-
-groupDatabase = [
-    ["groupA","john"],
-    ["groupB","ahmed","jane"],
-    ]
-
+groupDatabase = {
+    "groupA":["john"],
+    "groupB":["ahmed","jane"],
+    }
 
 logging.basicConfig(level=logging.DEBUG, filename="/tmp/logfile", filemode="a+",
                         format="%(asctime)-15s %(levelname)-8s %(message)s")
 
 logging.info("Called with {}".format(sys.argv))
 
+def formatUserDetails(userName):
+   if userName in userDatabase:
+      return '\t'.join([userName, userDatabase[userName]["fullname"], userDatabase[userName]["email"], userDatabase[userName]["dept"], userDatabase[userName]["office"], userDatabase[userName]["cardno"]])
+   else:
+      print("Call to formatUserDetails error for username {}".format(userName),file=sys.stderr)
+      sys.exit(-1)
 
-def getUser(userName):
-   for user in userDatabase:
-      if user[0] == userName:
-         return user
-   return ''
-
+# Being called as user auth program
+if len(sys.argv) == 1:
+   name = input()
+   password = input()
+   if name in userDatabase and userDatabase[name]["password"] == password:
+      print("OK")
+      sys.exit(0)
+   else:
+      print("Wrong username or password",file=sys.stderr)
+      sys.exit(-1)
 
 if len(sys.argv) < 2 or  sys.argv[1] != '-':
    print("incorrect argument passed {0}".format(sys.argv), file=sys.stderr)
    sys.exit(-1)
 
+
+# Being called as user sync program
 if sys.argv[2] == "is-valid":
    print('Y')
    sys.exit(0)
   
 if sys.argv[2] == "all-users":
-   for user in  userDatabase:
-      print('/'.join(user))
+   for name in userDatabase:
+      print(formatUserDetails(name))
    sys.exit(0)
 
 if sys.argv[2] == "all-groups":
-   for group in groupDatabase:
-      print(group[0])
+   print('\n'.join([g for g in groupDatabase]))
    sys.exit(0)
-
 
 if sys.argv[2] == "get-user-details":
       name = input()
-      u = getUser(name)
-      if '' == u:
+      if  name in userDatabase:
+         print(formatUserDetails(name))
+         sys.exit(0)
+      else:
          print("Can't find user {0}".format(name), file=sys.stderr)
          sys.exit(-1)
 
-      print('/'.join(u))
-      sys.exit(0)
-
 if sys.argv[2] == "group-member-names":
-   for group in groupDatabase:
-      if group[0] == sys-argv[3]:
-         for user in group[1:]:
-            print(user)
-   sys.exit(0)
+      if  sys.argv[3] in groupDatabase:
+         for user in groupDatabase[sys.argv[3]]:
+            if user in userDatabase:
+               print(user)
+            else:
+               print("Invalid user name {} found in group list {}".format(user, group),file=sys.stderr)
+               sys.exit(-1)
+         sys.exit(0)
+      else:
+         print("Group name {} not found".format(sys.argv[3]),file=sys.stderr)
+         sys.exit(-1)
 
 
 if sys.argv[2] == "group-members":
-   for group in groupDatabase:
-      if group[0] == sys.argv[3]:
-         for user in group[1:]:
-            print('/'.join(getuser(user)))
+      if  sys.argv[3] in groupDatabase:
+         for user in groupDatabase[sys.argv[3]]:
+            if user in userDatabase:
+               print(formatUserDetails(user))
+            else:
+               print("Invalid user name {} found in group list {}".format(user, group),file=sys.stderr)
+               sys.exit(-1)
          sys.exit(0)
-   print("Can't find gourp {}".format(sys.srgv[3]))
-   sys.exit(-1)
+      else:
+         print("Group name {} not found".format(sys.argv[3]),file=sys.stderr)
+         sys.exit(-1)
 
 
    
-
+if sys.argv[2] == "is-user-in-group":
+   if  sys.argv[3] in groupDatabase:
+      if sys.argv[4] in groupDatabase[sys.argv[3]]:
+               print('Y')
+               sys.exit(0)
+      print('N')
+      sys.exit(0)
+   print("Invalid Group name {}".format(sys.argv[3]),file=sys.stderr)
+   sys.exit(-1)
+   
 
 print("Can't process arguments {0}".format(sys.argv), file=sys.stderr)
