@@ -4,7 +4,7 @@
 #  A trivial example of a custome user program for use with PaperCut NG or MF
 #  See http://www.papercut.com/kb/Main/CaseStudyCustomUserSyncIntegration
 #
-#  Uses Python 3 to get access to arrays and be X platform. Make sure that the
+#  Uses Python 3 for dictionaries and be X platform. Make sure that the
 #  Python intepreter is on the path for the PaperCut service account or specify
 #  the path explicitly.
 
