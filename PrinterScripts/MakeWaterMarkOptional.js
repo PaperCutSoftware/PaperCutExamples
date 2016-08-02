@@ -1,7 +1,7 @@
 /*
 * Provide the user with opportunity to remove watermark before printing
 *
-* The default watermakr are used unless the users enters a valid override code
+* The default watermark are used unless the users enters a valid override code
 */
 
 var OVERRIDE_CODE = "Plain"
