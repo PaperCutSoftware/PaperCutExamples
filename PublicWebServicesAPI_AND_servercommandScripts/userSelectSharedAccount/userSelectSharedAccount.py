@@ -57,7 +57,7 @@ def changeAccountTo(user):
 
     proxy.api.setUserAccountSelectionAutoSelectSharedAccount(auth,user,selectedAccount, False)
 
-    return "Changed to {}<br><form action=\"{}\"><input type=\"submit\" name=\"Return\"></form>".format(selectedAccount, returnurl)
+    return "Changed to {}<br><form action=\"{}\" method=\"post\"><input type=\"submit\" name=\"Return\"></form>".format(selectedAccount, returnurl)
 
 run(host='localhost', port=8080, debug=True, reloader=True)
 
