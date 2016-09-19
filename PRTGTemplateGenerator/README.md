@@ -43,4 +43,4 @@ Argument | Parameter | Description
 `-s` `--server` |STRING (Default None)|Filter results by Server
 `-li` `--limit`|INT (Default 250)|Maximum number of printers/devices to include in the template
 ### Notes
-* URLs are hardcoded, and won't use PRTG's [Smart URL Replacement](https://www.paessler.com/manuals/prtg/http_advanced_sensor#smart). If your server address updates to a new one, you will need to run the script again.
+* URLs are currently hardcoded, and won't use PRTG's [Smart URL Replacement](https://www.paessler.com/manuals/prtg/http_advanced_sensor#smart). If your server address updates to a new one, you will need to run the script again.

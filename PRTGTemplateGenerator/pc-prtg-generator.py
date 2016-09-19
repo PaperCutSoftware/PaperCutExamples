@@ -184,29 +184,47 @@ def buildDeviceTemplate(deviceCollection):
 
     return root
 
+def checkFilters(filterList, row):
+    for f in filterList:
+        if f(row) is False:
+            return False
+    return True
 
 # Filter Generator
-def filterCSV(csvReader, server, location, deviceType):
+def filterCSV(csvReader, filterList):
     for row in csvReader:
-        if filterByServer(row, server, deviceType) and filterByLocation(row, location, deviceType):
+        if checkFilters(filterList, row):
             yield row
 
+def filterByNameFunction(name):
+    return lambda row: row[PRINTER_NAME_COLUMN] == name
 
-def filterByServer(row, server, deviceType):
-    if server is None:
-        return True
+def filterByServerFunction(server, deviceType):
     if deviceType is DeviceType.DEVICE:
-        return True
-    return row[PRINTER_SERVER_COLUMN] == server
-
-
-def filterByLocation(row, location, deviceType):
-    if location is None:
-        return True
-    if deviceType is DeviceType.DEVICE:
-        return row[DEVICE_LOCATION_COLUMN] == location
+        return lambda row: True
     if deviceType is DeviceType.PRINTER:
-        return row[PRINTER_LOCATION_COLUMN] == location
+        return lambda row: row[PRINTER_SERVER_COLUMN] == server
+    return TypeError
+
+
+def filterByLocationFunction(location, deviceType):
+    if deviceType is DeviceType.DEVICE:
+        return lambda row: row[DEVICE_LOCATION_COLUMN] == location
+    if deviceType is DeviceType.PRINTER:
+        return lambda row: row[PRINTER_LOCATION_COLUMN] == location
+    return TypeError
+
+def consolidateFilters(args, deviceType):
+    filterList = []
+    if args.server is not None:
+        filterList.append(filterByServerFunction(str(args.server), deviceType))
+    if args.location is not None:
+        filterList.append(filterByLocationFunction(str(args.location), deviceType))
+    if args.name is not None:
+        filterList.append(filterByNameFunction(str(args.name)))
+
+    return filterList
+
 
 
 # Build Device Data
@@ -319,8 +337,11 @@ def main():
     next(printerList, None)
 
     print('Reading Printer URLs...')
-    printerCollection = createPrinterCollection(filterCSV(
-        printerList, args.server, args.location, DeviceType.PRINTER), args.limit)
+    printerFilterList = consolidateFilters(args, DeviceType.PRINTER)
+    if len(printerFilterList) is not 0:
+        printerCollection = createPrinterCollection(filterCSV(printerList, printerFilterList), args.limit)
+    else:
+        printerCollection = createPrinterCollection(printerList, args.limit)
 
     if len(printerCollection) is 0:
         print('No printers found.')
@@ -340,8 +361,11 @@ def main():
     next(deviceList, None)
 
     print('Reading Device URLs...')
-    deviceCollection = createDeviceCollection(filterCSV(
-        deviceList, args.server, args.location, DeviceType.DEVICE), args.limit)
+    deviceFilterList = consolidateFilters(args, DeviceType.DEVICE)
+    if len(deviceFilterList) is not 0:
+        deviceCollection = createDeviceCollection(filterCSV(deviceList, deviceFilterList), args.limit)
+    else:
+        deviceCollection = createDeviceCollection(deviceList, args.limit)
 
     if len(deviceCollection) is 0:
         print('No devices found.')
@@ -360,6 +384,9 @@ if __name__ == "__main__":
                         help='The GET query URL for your PaperCut Server Health API'+
                             ' (See Options->Advanced->System Health Monitoring)'+
                             ' example: http://203.0.113.0:9191/api/health/?Authorization=authKey1234')
+
+    parser.add_argument('-n', '--name', default=None,
+                        help='Filter by name (default none)')
 
     parser.add_argument('-lo', '--location', default=None,
                         help='Filter by location (default none)')
