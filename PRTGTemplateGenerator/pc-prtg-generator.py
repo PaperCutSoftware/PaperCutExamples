@@ -1,12 +1,13 @@
-#!/usr/bin/env python
-from urllib2 import Request, urlopen, URLError
+#!/usr/bin/env python3
 import sys
 import argparse
-from urlparse import urlparse
 import re
 import xml.etree.ElementTree as ET
-import uuid
-import csv
+from csv import reader
+from urllib.request import Request, urlopen, URLError
+from urllib.parse import urlparse
+from codecs import iterdecode
+from uuid import uuid4
 
 # Constants
 PRINTER_SERVER_COLUMN = 0
@@ -53,12 +54,12 @@ def indent(elem, level=0):
 
 
 def writeXMLFile(root, **kwargs):
-    filename = kwargs.get('filename', str(uuid.uuid4()) + '.odt')
+    filename = kwargs.get('filename', str(uuid4()) + '.odt')
 
     indent(root)
     document = ET.ElementTree(root)
     document.write(filename, encoding='utf-8', xml_declaration=True)
-    print 'Template saved: {0}'.format(filename)
+    print('Template saved: {0}'.format(filename))
 
 
 # PRTG Node Generation
@@ -87,7 +88,7 @@ def createSensorNode(sensorType, displayName, tags, url, **kwargs):
     xmlNode = kwargs.get('xml_node', '')
 
     node = ET.Element('create')
-    node.set('id', str(uuid.uuid4()))
+    node.set('id', str(uuid4()))
     node.set('displayname', displayName)
 
     createData = ET.SubElement(node, 'createdata')
@@ -121,7 +122,7 @@ def createDeviceTemplateRoot(**kwargs):
 
 
 def buildServerTemplate(server):
-    print 'Creating PRTG PaperCut Server Template...'
+    print('Creating PRTG PaperCut Server Template...')
     root = createDeviceTemplateRoot(id='pc-server',
                                     name='PaperCut Server')
 
@@ -161,7 +162,7 @@ def buildServerTemplate(server):
 
 
 def buildPrinterTemplate(printerCollection):
-    print 'Creating PRTG Printer Template...'
+    print('Creating PRTG Printer Template...')
     root = createDeviceTemplateRoot(id='pc-printers',
                                     name='PaperCut Printers')
 
@@ -173,7 +174,7 @@ def buildPrinterTemplate(printerCollection):
 
 
 def buildDeviceTemplate(deviceCollection):
-    print 'Creating PRTG Device Template...'
+    print('Creating PRTG Device Template...')
     root = createDeviceTemplateRoot(id='pc-devices',
                                     name='PaperCut Devices')
 
@@ -303,26 +304,26 @@ def main():
     authkey = re.split('[=&]+', o.query)[-1]
 
     server = PapercutServer(address, authkey, port)
-    print 'Connecting to PaperCut Installation at {0}:{1}'.format(server.address, server.port)
-    print 'Filtering:\n\tserver:\t\t{0}\n\tlocation:\t{1}'.format(args.server, args.location)
+    print('Connecting to PaperCut Installation at {0}:{1}'.format(server.address, server.port))
+    print('Filtering:\n\tserver:\t\t{0}\n\tlocation:\t{1}'.format(args.server, args.location))
 
     # Printers
     printerRequest = Request(server.getPrintersCSVUrl())
     try:
         printerResponse = urlopen(printerRequest)
-    except URLError, e:
-        print e
+    except URLError as e:
+        print(e)
         return e
 
-    printerList = csv.reader(printerResponse)
-    printerList.next()
+    printerList = reader(iterdecode(printerResponse,'utf-8'))
+    next(printerList, None)
 
-    print 'Reading Printer URLs...'
+    print('Reading Printer URLs...')
     printerCollection = createPrinterCollection(filterCSV(
         printerList, args.server, args.location, DeviceType.PRINTER), args.limit)
 
     if len(printerCollection) is 0:
-        print 'No printers found.'
+        print('No printers found.')
     else:
         printerTemplate = buildPrinterTemplate(printerCollection)
         writeXMLFile(printerTemplate, filename='PaperCut Printers.odt')
@@ -331,19 +332,19 @@ def main():
     deviceRequest = Request(server.getDevicesCSVUrl())
     try:
         deviceResponse = urlopen(deviceRequest)
-    except URLError, e:
-        print e
+    except URLError as e:
+        print(e)
         return e
 
-    deviceList = csv.reader(deviceResponse)
-    deviceList.next()
+    deviceList = reader(iterdecode(deviceResponse,'utf-8'))
+    next(deviceList, None)
 
-    print 'Reading Device URLs...'
+    print('Reading Device URLs...')
     deviceCollection = createDeviceCollection(filterCSV(
         deviceList, args.server, args.location, DeviceType.DEVICE), args.limit)
 
     if len(deviceCollection) is 0:
-        print 'No devices found.'
+        print('No devices found.')
     else:
         deviceTemplate = buildDeviceTemplate(deviceCollection)
         writeXMLFile(deviceTemplate, filename='PaperCut Devices.odt')
