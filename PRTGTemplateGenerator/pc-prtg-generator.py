@@ -323,7 +323,8 @@ def main():
 
     server = PapercutServer(address, authkey, port)
     print('Connecting to PaperCut Installation at {0}:{1}'.format(server.address, server.port))
-    print('Filtering:\n\tServer:\t\t{0}\n\tLocation:\t{1}'.format(args.server, args.location))
+    print('Filtering:\n\tServer:\t\t{0}\n\tLocation:\t{1}\n\tName:\t\t{2}'.format(args.server, args.location, args.name))
+
 
     # Printers
     printerRequest = Request(server.getPrintersCSVUrl())
