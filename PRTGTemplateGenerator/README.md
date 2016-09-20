@@ -39,6 +39,7 @@ Argument | Parameter | Description
 ### Optional Arguments
 Argument | Parameter | Description
 ---|---|---
+`-n` `--name`|STRING (Default None)|Filter results by Name
 `-lo` `--location`|STRING (Default None)|Filter results by Location
 `-s` `--server` |STRING (Default None)|Filter results by Server
 `-li` `--limit`|INT (Default 250)|Maximum number of printers/devices to include in the template

@@ -197,7 +197,7 @@ def filterCSV(csvReader, filterList):
             yield row
 
 def filterByNameFunction(name):
-    return lambda row: row[PRINTER_NAME_COLUMN] == name
+    return lambda row: name in row[PRINTER_NAME_COLUMN]
 
 def filterByServerFunction(server, deviceType):
     if deviceType is DeviceType.DEVICE:
@@ -205,7 +205,6 @@ def filterByServerFunction(server, deviceType):
     if deviceType is DeviceType.PRINTER:
         return lambda row: row[PRINTER_SERVER_COLUMN] == server
     return TypeError
-
 
 def filterByLocationFunction(location, deviceType):
     if deviceType is DeviceType.DEVICE:
