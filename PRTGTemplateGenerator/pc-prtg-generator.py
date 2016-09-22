@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 from csv import reader
 from urllib.request import Request, urlopen, URLError
 from urllib.parse import urlparse
+from itertools import islice
 from codecs import iterdecode
 from uuid import uuid4
 
@@ -20,6 +21,7 @@ DEVICE_LOCATION_COLUMN = 1
 DEVICE_URL_COLUMN = 2
 
 # Enums
+
 
 class CheckType:
     PING = 1
@@ -61,8 +63,7 @@ def writeXMLFile(root, **kwargs):
     document.write(filename, encoding='utf-8', xml_declaration=True)
     print('Template saved: {0}'.format(filename))
 
-
-# PRTG Node Generation
+# PRTG Primitive Nodes
 def createCheckNode(checkType):
     if checkType is CheckType.PING:
         node = ET.Element('check')
@@ -120,7 +121,7 @@ def createDeviceTemplateRoot(**kwargs):
 
     return root
 
-
+# PRTG Composite Nodes
 def buildServerTemplate(server):
     print('Creating PRTG PaperCut Server Template...')
     root = createDeviceTemplateRoot(id='pc-server',
@@ -161,10 +162,11 @@ def buildServerTemplate(server):
     return root
 
 
-def buildPrinterTemplate(printerCollection):
-    print('Creating PRTG Printer Template...')
-    root = createDeviceTemplateRoot(id='pc-printers',
-                                    name='PaperCut Printers')
+def buildPrinterTemplate(printerCollection, **kwargs):
+    id = kwargs.get('id', '')
+    name = kwargs.get('name', '')
+    root = createDeviceTemplateRoot(id=id,
+                                    name=name)
 
     root.append(createCheckNode(CheckType.PING))
     for printer in printerCollection:
@@ -172,87 +174,63 @@ def buildPrinterTemplate(printerCollection):
 
     return root
 
-
-def buildDeviceTemplate(deviceCollection):
-    print('Creating PRTG Device Template...')
-    root = createDeviceTemplateRoot(id='pc-devices',
-                                    name='PaperCut Devices')
-
-    root.append(createCheckNode(CheckType.PING))
-    for device in deviceCollection:
-        root.append(device.createXMLNode())
-
-    return root
-
-def checkFilters(filterList, row):
-    for f in filterList:
-        if f(row) is False:
-            return False
-    return True
-
-# Filter Generator
-def filterCSV(csvReader, filterList):
+# Filters
+def filterCSV(csvReader, predicateList):
     for row in csvReader:
-        if checkFilters(filterList, row):
+        if all(f(row) for f in predicateList):
             yield row
 
-def filterByNameFunction(name):
+
+def namePredicate(name):
     return lambda row: name in row[PRINTER_NAME_COLUMN]
 
-def filterByServerFunction(server, deviceType):
+
+def serverPredicate(server, deviceType):
     if deviceType is DeviceType.DEVICE:
         return lambda row: True
     if deviceType is DeviceType.PRINTER:
-        return lambda row: row[PRINTER_SERVER_COLUMN] == server
+        return lambda row: server in row[PRINTER_SERVER_COLUMN]
     return TypeError
 
-def filterByLocationFunction(location, deviceType):
+
+def locationPredicate(location, deviceType):
     if deviceType is DeviceType.DEVICE:
-        return lambda row: row[DEVICE_LOCATION_COLUMN] == location
+        return lambda row: location in row[DEVICE_LOCATION_COLUMN]
     if deviceType is DeviceType.PRINTER:
-        return lambda row: row[PRINTER_LOCATION_COLUMN] == location
+        return lambda row: location in row[PRINTER_LOCATION_COLUMN]
     return TypeError
 
-def consolidateFilters(args, deviceType):
-    filterList = []
+
+def consolidatePredicates(args, deviceType):
+    predicateList = []
     if args.server is not None:
-        filterList.append(filterByServerFunction(str(args.server), deviceType))
+        predicateList.append(serverPredicate(str(args.server), deviceType))
     if args.location is not None:
-        filterList.append(filterByLocationFunction(str(args.location), deviceType))
+        predicateList.append(locationPredicate(str(args.location), deviceType))
     if args.name is not None:
-        filterList.append(filterByNameFunction(str(args.name)))
+        predicateList.append(namePredicate(str(args.name)))
 
-    return filterList
+    return predicateList
 
-
-
-# Build Device Data
+# Build Printer Data
 def createPrinterCollection(source, max):
-    currentCount = 0
     printerCollection = []
-    for row in source:
-        printerCollection.append(Printer(printer_server=row[PRINTER_SERVER_COLUMN],
-                                         printer_name=row[PRINTER_NAME_COLUMN],
-                                         printer_location=row[PRINTER_LOCATION_COLUMN],
-                                         status_url=row[PRINTER_URL_COLUMN],
-                                         device_type=DeviceType.PRINTER))
-        currentCount += 1
-        if currentCount >= max:
-            break
+    for row in islice(source, max):
+        printerCollection.append(Printer(row[PRINTER_NAME_COLUMN],
+                                         row[PRINTER_LOCATION_COLUMN],
+                                         row[PRINTER_URL_COLUMN],
+                                         DeviceType.PRINTER,
+                                         printer_server=row[PRINTER_SERVER_COLUMN]))
     return printerCollection
 
 
 def createDeviceCollection(source, max):
-    currentCount = 0
     deviceCollection = []
-    for row in source:
-        deviceCollection.append(Printer(printer_name=row[DEVICE_NAME_COLUMN],
-                                        printer_location=row[DEVICE_LOCATION_COLUMN],
-                                        status_url=row[DEVICE_URL_COLUMN],
-                                        device_type=DeviceType.DEVICE))
-        currentCount += 1
-        if currentCount >= max:
-            break
+    for row in islice(source, max):
+        deviceCollection.append(Printer(row[DEVICE_NAME_COLUMN],
+                                        row[DEVICE_LOCATION_COLUMN],
+                                        row[DEVICE_URL_COLUMN],
+                                        DeviceType.DEVICE))
     return deviceCollection
 
 
@@ -265,36 +243,43 @@ class PapercutServer:
 
     # API Urls
     def getServerHealthNodeUrl(self):
-        return 'http://{0}:{2}/api/health?Authorization={1}'.format(self.address, self.authkey, self.port)
+        return 'http://{0}:{2}/api/health?Authorization={1}'\
+            .format(self.address, self.authkey, self.port)
 
     def getHeldJobsNodeUrl(self):
-        return 'http://{0}:{2}/api/stats/held-jobs-count?Authorization={1}'.format(self.address, self.authkey, self.port)
+        return 'http://{0}:{2}/api/stats/held-jobs-count?Authorization={1}'\
+            .format(self.address, self.authkey, self.port)
 
     def getRecentPagesNodeUrl(self):
-        return 'http://{0}:{2}/api/stats/recent-pages-count?minutes=1&Authorization={1}'.format(self.address, self.authkey, self.port)
+        return 'http://{0}:{2}/api/stats/recent-pages-count?minutes=1&Authorization={1}'\
+            .format(self.address, self.authkey, self.port)
 
     def getRecentErrorsNodeUrl(self):
-        return 'http://{0}:{2}/api/stats/recent-errors-count?minutes=10&Authorization={1}'.format(self.address, self.authkey, self.port)
+        return 'http://{0}:{2}/api/stats/recent-errors-count?minutes=10&Authorization={1}'\
+            .format(self.address, self.authkey, self.port)
 
     def getRecentWarningsNodeUrl(self):
-        return 'http://{0}:{2}/api/stats/recent-warnings-count?minutes=1&Authorization={1}'.format(self.address, self.authkey, self.port)
+        return 'http://{0}:{2}/api/stats/recent-warnings-count?minutes=1&Authorization={1}'\
+            .format(self.address, self.authkey, self.port)
 
     # CSV Urls
     def getPrintersCSVUrl(self):
-        return 'http://{0}:{2}/api/health/printers/urls?Authorization={1}'.format(self.address, self.authkey, self.port)
+        return 'http://{0}:{2}/api/health/printers/urls?Authorization={1}'\
+            .format(self.address, self.authkey, self.port)
 
     def getDevicesCSVUrl(self):
-        return 'http://{0}:{2}/api/health/devices/urls?Authorization={1}'.format(self.address, self.authkey, self.port)
+        return 'http://{0}:{2}/api/health/devices/urls?Authorization={1}'\
+            .format(self.address, self.authkey, self.port)
 
 
 class Printer:
 
-    def __init__(self, **kwargs):
-        self.printerServer = kwargs.get('printer_server', None)
-        self.printerName = kwargs.get('printer_name', None)
-        self.printerLocation = kwargs.get('printer_location', None)
-        self.statusUrl = kwargs.get('status_url', None)
-        self.deviceType = kwargs.get('device_type', None)
+    def __init__(self, printerName, printerLocation, statusUrl, deviceType, **kwargs):
+        self.printerServer = kwargs.get('printer_server', '')
+        self.printerName = printerName
+        self.printerLocation = printerLocation
+        self.statusUrl = statusUrl
+        self.deviceType = deviceType
 
     def createXMLNode(self):
         if self.deviceType is DeviceType.PRINTER:
@@ -314,16 +299,17 @@ class Printer:
 
 
 def main():
-    address = o.hostname
+    address = pcUrl.hostname
     port = '80'
-    if o.port is not None:
-        port = o.port
-    authkey = re.split('[=&]+', o.query)[-1]
+    if pcUrl.port is not None:
+        port = pcUrl.port
+    authkey = re.split('[=&]', pcUrl.query)[-1]
 
     server = PapercutServer(address, authkey, port)
-    print('Connecting to PaperCut Installation at {0}:{1}'.format(server.address, server.port))
-    print('Filtering:\n\tServer:\t\t{0}\n\tLocation:\t{1}\n\tName:\t\t{2}'.format(args.server, args.location, args.name))
-
+    print('Connecting to PaperCut Installation at {0}:{1}'
+          .format(server.address, server.port))
+    print('Filtering:\n\tServer:\t\t{0}\n\tLocation:\t{1}\n\tName:\t\t{2}'
+          .format(args.server, args.location, args.name))
 
     # Printers
     printerRequest = Request(server.getPrintersCSVUrl())
@@ -333,20 +319,23 @@ def main():
         print(e)
         return e
 
-    printerList = reader(iterdecode(printerResponse,'utf-8'))
+    printerList = reader(iterdecode(printerResponse, 'utf-8'))
     next(printerList, None)
 
     print('Reading Printer URLs...')
-    printerFilterList = consolidateFilters(args, DeviceType.PRINTER)
-    if len(printerFilterList) is not 0:
-        printerCollection = createPrinterCollection(filterCSV(printerList, printerFilterList), args.limit)
+    printerPredicateList = consolidatePredicates(args, DeviceType.PRINTER)
+    if len(printerPredicateList) is not 0:
+        printerCollection = createPrinterCollection(
+            filterCSV(printerList, printerPredicateList), args.limit)
     else:
         printerCollection = createPrinterCollection(printerList, args.limit)
 
     if len(printerCollection) is 0:
         print('No printers found.')
     else:
-        printerTemplate = buildPrinterTemplate(printerCollection)
+        printerTemplate = buildPrinterTemplate(printerCollection,
+                                               id='pc-printers',
+                                               name='PaperCut Printers')
         writeXMLFile(printerTemplate, filename='PaperCut Printers.odt')
 
     # Devices
@@ -357,20 +346,23 @@ def main():
         print(e)
         return e
 
-    deviceList = reader(iterdecode(deviceResponse,'utf-8'))
+    deviceList = reader(iterdecode(deviceResponse, 'utf-8'))
     next(deviceList, None)
 
     print('Reading Device URLs...')
-    deviceFilterList = consolidateFilters(args, DeviceType.DEVICE)
-    if len(deviceFilterList) is not 0:
-        deviceCollection = createDeviceCollection(filterCSV(deviceList, deviceFilterList), args.limit)
+    devicePredicateList = consolidatePredicates(args, DeviceType.DEVICE)
+    if len(devicePredicateList) is not 0:
+        deviceCollection = createDeviceCollection(
+            filterCSV(deviceList, devicePredicateList), args.limit)
     else:
         deviceCollection = createDeviceCollection(deviceList, args.limit)
 
     if len(deviceCollection) is 0:
         print('No devices found.')
     else:
-        deviceTemplate = buildDeviceTemplate(deviceCollection)
+        deviceTemplate = buildPrinterTemplate(deviceCollection,
+                                              id='pc-devices',
+                                              name='PaperCut Printers')
         writeXMLFile(deviceTemplate, filename='PaperCut Devices.odt')
 
     # Server
@@ -381,9 +373,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Generate PaperCut Printer and Device status templates for PRTG')
     parser.add_argument('address',
-                        help='The GET query URL for your PaperCut Server Health API'+
-                            ' (See Options->Advanced->System Health Monitoring)'+
-                            ' example: http://203.0.113.0:9191/api/health/?Authorization=authKey1234')
+                        help='The GET query URL for your PaperCut Server Health API' +
+                        ' (See Options->Advanced->System Health Monitoring)' +
+                        ' example: http://203.0.113.0:9191/api/health/?Authorization=authKey1234')
 
     parser.add_argument('-n', '--name', default=None,
                         help='Filter by name (default none)')
@@ -398,5 +390,5 @@ if __name__ == "__main__":
                         help='Maximum number of printers to include in template (default 250)')
 
     args = parser.parse_args()
-    o = urlparse(args.address)
+    pcUrl = urlparse(args.address)
     main()
