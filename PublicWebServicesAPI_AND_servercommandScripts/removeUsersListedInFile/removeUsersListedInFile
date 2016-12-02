@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# Remove PaperCut users if they do not appear in a data file (given in $1)
+
+server-command list-user-accounts  | xargs -n 1 -I {} bash -c "grep {} $1 || server-command delete-existing-user {}"
