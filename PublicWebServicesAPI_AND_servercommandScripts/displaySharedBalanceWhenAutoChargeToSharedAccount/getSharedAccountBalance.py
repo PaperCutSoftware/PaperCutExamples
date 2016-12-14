@@ -2,7 +2,6 @@
 
 # If a user is configured to auto charge to a single shared account then provide the account balance
 
-# Because of a bug the current API users may ONLY have access to the single shared account they are using for this to work
 
 import xmlrpc.client
 import sys
@@ -18,7 +17,7 @@ if len(sys.argv) != 2:
 user=sys.argv[1]
 
 proxy = xmlrpc.client.ServerProxy(host)
- 
+
 if not proxy.api.isUserExists(auth, user):
     print("Can't find user {}".format(user))
     exit(-1)
@@ -27,16 +26,12 @@ if  proxy.api.getUserProperty(auth,user, "account-selection.mode") != "AUTO_CHAR
     print("User {} is not configured to automatically charge to a shared account".format(user))
     exit(-1)
 
-shared_accounts = proxy.api.listUserSharedAccounts(auth, user, 0, 99, True)
+shared_account = proxy.api.getUserProperty(auth, user, "auto-shared-account")
 
-if len(shared_accounts) == 1:
-    print("User {} automatically charges to shared account \"{}\" which has a of balance {}".format(user, shared_accounts[0],
-                                                   proxy.api.getSharedAccountAccountBalance(auth, shared_accounts[0])))
-    exit(0)
-elif len(shared_accounts) == 0:
-    print("User {} has no access to a shared account. Cannot display balance".format(user))
-else:
-    print("User {} has access to more than one shared account. Cannot display balance".format(user))
+if len(shared_account) == 0:
+    print("Zero length account name returned")
+    exit(-1)
 
-exit(-1)
+print("User {} automatically charges to shared account \"{}\" which has a of balance {}".format(user, shared_account,
+                                                   proxy.api.getSharedAccountAccountBalance(auth, shared_account)))
 
