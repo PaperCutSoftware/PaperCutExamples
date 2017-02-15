@@ -22,4 +22,4 @@ __Please make sure that you test adequately in your environment__.
 Please feel free to send us pull requests, or if you are not comfortable pull requests, send changes and
 additions to  integration-dev-support@papercut.com. We will of course credit you and you get bragging rights.
 
-Copyright (C) 2015  PaperCut Software Pty Ltd.
+Copyright (C) 2015-2017  PaperCut Software Pty Ltd.
