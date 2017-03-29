@@ -10,7 +10,7 @@
 
 # http://www.papercut.com/products/ng/manual/ch-customization-user-web-pages.html#Additional-Links-in-the-Navigation-Men
 
-# The URL neeeds to something like http://localhost:8080/getsharedaccountselection/%user%?returl=%return_url%
+# The URL neeeds to something like http://localhost:8080/getsharedaccountselection/%user%
 
 # This code is basic example only. It will require work before it can be used for production
 
@@ -27,16 +27,13 @@ auth="password"  # Value defined in advanced config property "auth.webservices.a
 
 proxy = xmlrpc.client.ServerProxy(host)
 
-returnurl = ""
-
 @route('/')
 def wrongUrl():
     return("Please log into PaperCut and set your shared account from there")
 
 @route('/getsharedaccountselection/<user>')
 def setSharedAccount(user):
-    global returnurl
-    returnurl = request.GET.get('returl','').strip()
+
     if not proxy.api.isUserExists(auth, user):
         return("Can't find user {}".format(user))
 
@@ -57,7 +54,7 @@ def changeAccountTo(user):
 
     proxy.api.setUserAccountSelectionAutoSelectSharedAccount(auth,user,selectedAccount, False)
 
-    return "Changed to {}<br><form action=\"{}\" method=\"post\"><input type=\"submit\" name=\"Return\"></form>".format(selectedAccount, returnurl)
+    return 'Changed default account to "{}"<br><br>Please close this tab/window and return to PaperCut'.format(selectedAccount)
 
 run(host='localhost', port=8080, debug=True, reloader=True)
 
