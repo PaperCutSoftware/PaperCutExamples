@@ -17,6 +17,8 @@ community, business partners and customers. We believe that all the examples sho
 however specific circumstances in your environment may mean that something does not perform as anticipated.
 __Please make sure that you test adequately in your environment__.
 
+You can find other examples in the PaperCut [Knowledge Base](https://www.papercut.com/kb/Category/API)
+
 ## Contributions Welcome
 
 Please feel free to send us pull requests, or if you are not comfortable pull requests, send changes and
