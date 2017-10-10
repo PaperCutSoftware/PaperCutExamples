@@ -7,7 +7,15 @@ https://groups.google.com/forum/#!forum/papercut-webservices-api
 
 This repository contains various examples of scripts and other things that PaperCut users may find useful.
 
-PaperCut is a powerful Copier and Printer management system. More details at http://papercut.com/
+It can be broadly grouped into the following things
+
+1. SQL report examples
+2. Programs and scripts that use the PaperCut web services API, from simple to complex
+3. An example of how to use the custom authentication and user account synchronisation CLI interface
+4. Some example printer scripts
+5. An example of a quick release terminal
+
+PaperCut MF (and PaperCut NG) is a powerful Copier and Printer management system. More details at http://papercut.com/
 
 All the files in this repository come with ABSOLUTELY NO WARRANTY and in the hope they will be useful.
 This is free software, and you are welcome to redistribute it under the terms of the The MIT License,
