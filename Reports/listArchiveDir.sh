@@ -4,7 +4,7 @@
 # Modify to suite
 
 # Displays the location of all print archives for a specific printer,
-# printed after a certain date/time
+# for jobs printed after a certain date/time
 
 #  $1  printserver
 #  $2  prinnter name
@@ -13,20 +13,22 @@
 # For example
 #  $ ./getArchiveLocations.sh laptop-serv1 fake_printer "1999-01-08 04:05:06"
 
-# Note -- to discover the correct path on a Windows system
-# take the value from tbl_printer_usage_log.archive_path & replace '/' with '\'
+# Notes:
+#     * to discover the correct path on a Windows system
+#       take the value from tbl_printer_usage_log.archive_path & replace '/' with '\'
+#     * you must be running an external database to run SQL queries.
+#       https://www.papercut.com/kb/Main/RunningPaperCutOnAnExternalDatabase
 
 DATABASE=papercutdb
 DBUSER=papercut
 DIRSEP='/'
 
 # Are the archives somewhere other than the default?
-p="$(server-command get-config archiving.path)"
+p="$(~papercut/server/bin/mac/server-command get-config archiving.path)"
 
-if [[ -z $p ]] ; then
+if [[ -z "$p" ]] ; then
   p=~papercut/server/data/archive  # Default location
 fi
-
 
 psql -Atqd $DATABASE -U $DBUSER --field-separator=$DIRSEP <<EOF
 \set p '$p'

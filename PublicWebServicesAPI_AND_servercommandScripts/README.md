@@ -15,3 +15,4 @@ knowledge base [article](https://www.papercut.com/kb/Main/TopTipsForUsingThePubl
 * simpleTopUpBalance: Small and ugly web application to allow users to top up their PaperCut personal account balance
 * swapCardNumbers.sh: Bash script to swap the primary-card-number and secondary-card-number fields for all users.
 * userSelectSharedAccount: Small and ugly web application to allow users to change their own default shared account
+* ../Reports/listArchiveDir.sh: SQL script to list the archives for a specific printer that have happended since a given date. Find it [here](https://github.com/PaperCutSoftware/PaperCutExamples/blob/master/Reports/listArchiveDir.sh)
