@@ -25,10 +25,11 @@ groupDatabase = {
     "groupB":["ahmed","jane"],
     }
 
-logging.basicConfig(level=logging.DEBUG, filename="/tmp/logfile", filemode="a+",
-                        format="%(asctime)-15s %(levelname)-8s %(message)s")
+# logging.basicConfig(level=logging.DEBUG, filename="/tmp/logfile", filemode="a+",
+#                         format="%(asctime)-15s %(levelname)-8s %(message)s")
 
-logging.info("Called with {}".format(sys.argv))
+# logging.info("Called with {}".format(sys.argv))
+
 
 def formatUserDetails(userName):
    if userName in userDatabase:
@@ -37,35 +38,43 @@ def formatUserDetails(userName):
       print("Call to formatUserDetails error for username {}".format(userName),file=sys.stderr)
       sys.exit(-1)
 
+
 # Being called as user auth program
 if len(sys.argv) == 1:
    name = input()
    password = input()
    if name in userDatabase and userDatabase[name]["password"] == password:
-      print("OK")
+       print("OK\n{}\n".format(name)) # Note: return canonical user name
       sys.exit(0)
    else:
       print("Wrong username or password",file=sys.stderr)
+      print("ERROR\n")
       sys.exit(-1)
+
+
 
 if len(sys.argv) < 2 or  sys.argv[1] != '-':
    print("incorrect argument passed {0}".format(sys.argv), file=sys.stderr)
    sys.exit(-1)
 
 
+
 # Being called as user sync program
 if sys.argv[2] == "is-valid":
    print('Y')
    sys.exit(0)
-  
+
+
 if sys.argv[2] == "all-users":
    for name in userDatabase:
       print(formatUserDetails(name))
    sys.exit(0)
 
+
 if sys.argv[2] == "all-groups":
-   print('\n'.join([g for g in groupDatabase]))
-   sys.exit(0)
+    print('\n'.join([g for g in groupDatabase]))
+    sys.exit(0)
+
 
 if sys.argv[2] == "get-user-details":
       name = input()
@@ -75,6 +84,7 @@ if sys.argv[2] == "get-user-details":
       else:
          print("Can't find user {0}".format(name), file=sys.stderr)
          sys.exit(-1)
+
 
 if sys.argv[2] == "group-member-names":
       if  sys.argv[3] in groupDatabase:
@@ -104,7 +114,6 @@ if sys.argv[2] == "group-members":
          sys.exit(-1)
 
 
-   
 if sys.argv[2] == "is-user-in-group":
    if  sys.argv[3] in groupDatabase:
       if sys.argv[4] in groupDatabase[sys.argv[3]]:
@@ -114,6 +123,6 @@ if sys.argv[2] == "is-user-in-group":
       sys.exit(0)
    print("Invalid Group name {}".format(sys.argv[3]),file=sys.stderr)
    sys.exit(-1)
-   
+
 
 print("Can't process arguments {0}".format(sys.argv), file=sys.stderr)
