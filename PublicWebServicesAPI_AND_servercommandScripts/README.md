@@ -16,3 +16,6 @@ knowledge base [article](https://www.papercut.com/kb/Main/TopTipsForUsingThePubl
 * swapCardNumbers.sh: Bash script to swap the primary-card-number and secondary-card-number fields for all users.
 * userSelectSharedAccount: Small and ugly web application to allow users to change their own default shared account
 * ../Reports/listArchiveDir.sh: SQL script to list the archives for a specific printer that have happended since a given date. Find it [here](https://github.com/PaperCutSoftware/PaperCutExamples/blob/master/Reports/listArchiveDir.sh)
+* setUserPropeties.php: A trival PHP 7 example that shows how to handle encoding more complex paramters
+* C/xmlrpc.x: The basics of calling PaperCut web services from C. Inclues a Makefile to help you build it
+
