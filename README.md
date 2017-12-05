@@ -2,16 +2,16 @@
 
 [![Join the chat at https://gitter.im/PaperCutSoftware/PaperCutExamples](https://badges.gitter.im/PaperCutSoftware/PaperCutExamples.svg)](https://gitter.im/PaperCutSoftware/PaperCutExamples?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-We also recommend joining the mail supprt group at
+We also recommend joining the mail support group at
 https://groups.google.com/forum/#!forum/papercut-webservices-api
 
 This repository contains various examples of scripts and other things that PaperCut users may find useful.
 
-It can be broadly grouped into the following things
+It can be broadly grouped into the following things:
 
 1. SQL report examples
 2. Programs and scripts that use the PaperCut web services API, from simple to complex
-3. An example of how to use the custom authentication and user account synchronisation CLI interface
+3. An example of how to use the custom authentication and user account synchronisation CLI
 4. Some example printer scripts
 5. An example of a quick release terminal
 
