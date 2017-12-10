@@ -1,8 +1,10 @@
 #!/usr/bin/env php
 <?php
 
-/* An example PHP script to show how to manage paramters and responses on
+/* An example PHP script to show how to manage parameters and responses on
  * a modern version of PHP. Tested on PHP 7
+ *
+ * Uses the xmlrpc-epi library that comes with PHP
  */
 
 $auth = "token";
