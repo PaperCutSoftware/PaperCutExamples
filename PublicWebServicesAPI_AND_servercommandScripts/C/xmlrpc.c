@@ -18,7 +18,7 @@
 
 
 static void 
-die_if_fault_occurred (xmlrpc_env * const envP) {
+die_if_fault_occurred(xmlrpc_env * const envP) {
     if (envP->fault_occurred) {
         fprintf(stderr, "ERROR: %s (%d)\n",
                 envP->fault_string, envP->fault_code);
@@ -31,8 +31,8 @@ main(int           const argc,
      const char ** const argv) {
 
     if (argc != 2) {
-      fprintf(stderr, "ERROR: Must provide user name as paramter");
-      exit (1);
+        fprintf(stderr, "ERROR: Must provide user name as paramter");
+        exit(1);
     }
 
     char * const auth = "token";
@@ -62,7 +62,7 @@ main(int           const argc,
     /* Get our result and print it out. */
     xmlrpc_read_bool(&env, resultP, &found);
     die_if_fault_occurred(&env);
-    printf("The user %s %s\n", argv[1], found? "exists": "does not exist");
+    printf("The user %s %s\n", argv[1], found ? "exists" : "does not exist");
     
     /* Dispose of our result value. */
     xmlrpc_DECREF(resultP);
