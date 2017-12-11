@@ -44,7 +44,7 @@ if len(sys.argv) == 1:
    name = input()
    password = input()
    if name in userDatabase and userDatabase[name]["password"] == password:
-       print("OK\n{}\n".format(name)) # Note: return canonical user name
+      print("OK\n{}\n".format(name)) # Note: return canonical user name
       sys.exit(0)
    else:
       print("Wrong username or password",file=sys.stderr)
