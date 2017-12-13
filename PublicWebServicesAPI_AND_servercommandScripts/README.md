@@ -5,6 +5,7 @@ knowledge base [article](https://www.papercut.com/kb/Main/TopTipsForUsingThePubl
 
 * Update_Card_Number: Perl script to read usernames and card numbers from csv file and update PaperCut user details with the card number
 * delete-users-matching-regex: Small bash script to delete any user whose username matches a regular expression
+* delete-users-matching-regex.ps1: Small Windows Powershell script to delete any user whose username matches a regular expression
 * displaySharedBalanceWhenAutoChargeToSharedAccount.py: Lists all users who are automatically charging to a shared account and the shared account balance (Python)
 * findAllUsersInDept.py: Finds all users in a specific department (Python)
 * findAllUsersInGroup.py: Finds all users in a specific user group (Python)
