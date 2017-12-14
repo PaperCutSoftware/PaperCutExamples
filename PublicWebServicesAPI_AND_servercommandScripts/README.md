@@ -10,6 +10,7 @@ knowledge base [article](https://www.papercut.com/kb/Main/TopTipsForUsingThePubl
 * findAllUsersInDept.py: Finds all users in a specific department (Python)
 * findAllUsersInGroup.py: Finds all users in a specific user group (Python)
 * list-shared-account-balances: Bash script to list all shared accounts and the balance
+* list-shared-account-balances.ps1: Windows Powershell script to list all shared accounts and the balance
 * loadSharedAcconts.py: Python program that generates a large file of shared accounts and loads into PaperCut. Shows how to use the `getTaskStatus()` method
 * removeTempCardsJob.py: Removes all temp cards from PaperCut, if the cards are listed in an table. Easy to extend to use an external database (Python)
 * removeUsersListedInFile: Bash script that removes any user _NOT_ listed in a file
