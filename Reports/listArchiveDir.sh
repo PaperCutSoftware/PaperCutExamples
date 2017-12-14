@@ -11,7 +11,7 @@
 #  $3  date of last run
 
 # For example
-#  $ ./getArchiveLocations.sh laptop-serv1 fake_printer "1999-01-08 04:05:06"
+#  $ ./listArchiveDir.sh laptop-serv1 fake_printer "1999-01-08 04:05:06"
 
 # Notes:
 #     * to discover the correct path on a Windows system
@@ -30,11 +30,7 @@ if [[ -z "$p" ]] ; then
   p=~papercut/server/data/archive  # Default location
 fi
 
-psql -Atqd $DATABASE -U $DBUSER --field-separator=$DIRSEP <<EOF
-\set p '$p'
-\set server '$1'
-\set printer '$2'
-\set lastrun '$3'
+psql -Atqd $DATABASE -U $DBUSER --field-separator=$DIRSEP --set=p=$p --set=server=$1 --set=printer=$2 --set=lastrun=$3<<EOF
 select :'p',tbl_printer_usage_log.archive_path,tbl_printer_usage_log.job_uid
 from tbl_printer_usage_log, tbl_printer
 where tbl_printer_usage_log.usage_date > :'lastrun'
