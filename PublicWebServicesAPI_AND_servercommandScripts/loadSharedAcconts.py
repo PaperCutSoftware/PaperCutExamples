@@ -37,8 +37,8 @@ except xmlrpc.client.Fault as error:
     sys.exit(1)
 except xmlrpc.client.ProtocolError as error:
     print("\nA protocol error occurred\nURL: {}\nHTTP/HTTPS headers: {}\nError code: {}\nError message: {}".format(
-            error.url, error.headers, error.errcode, error.errmsg))
-        sys.exit(1)
+        error.url, error.headers, error.errcode, error.errmsg))
+    sys.exit(1)
 
 status = proxy.api.getTaskStatus()
 while not status["completed"]:
