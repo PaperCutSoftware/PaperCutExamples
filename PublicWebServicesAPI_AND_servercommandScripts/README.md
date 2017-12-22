@@ -15,7 +15,8 @@ knowledge base [article](https://www.papercut.com/kb/Main/TopTipsForUsingThePubl
 * removeTempCardsJob.py: Removes all temp cards from PaperCut, if the cards are listed in an table. Easy to extend to use an external database (Python)
 * removeUsersListedInFile: Bash script that removes any user _NOT_ listed in a file
 * simpleTopUpBalance: Small and ugly web application to allow users to top up their PaperCut personal account balance
-* swapCardNumbers.sh: Bash script to swap the primary-card-number and secondary-card-number fields for all users.
+* swapCardNumbers.sh: Bash script to swap the primary-card-number and secondary-card-number fields for all users
+* topUpOverDrawnAccounts.sh: Bash script to adjust all -ve balances, presumbly with external funds
 * userSelectSharedAccount: Small and ugly web application to allow users to change their own default shared account
 * ../Reports/listArchiveDir.sh: SQL script to list the archives for a specific printer that have happended since a given date. Find it [here](https://github.com/PaperCutSoftware/PaperCutExamples/blob/master/Reports/listArchiveDir.sh)
 * setUserPropeties.php: A trival PHP 7 example that shows how to handle encoding more complex paramters

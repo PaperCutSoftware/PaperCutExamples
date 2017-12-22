@@ -1,4 +1,5 @@
-# Lists the current balance for all shared accounts
+#!/usr/bin/env pwsh
+## Lists the current balance for all shared accounts
 # Works with Windows Powershell
 
 
