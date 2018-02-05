@@ -6,7 +6,7 @@
 # when they want to add credit to their PaperCut personal account. The url
 # should refer to this small web app When the user clicks on the URL link
 # (in the PaperCut user web page) to the web app, the user identification details
-# is passed as part of the URL. This is explained at:
+# are passed as part of the URL. This is explained at:
 
 # https://www.papercut.com/products/ng/manual/common/topics/customize-user-web-pages.html#customize-user-web-pages-nav-links
 
@@ -22,6 +22,8 @@ import sys
 # $ wget http://bottlepy.org/bottle.py
 from bottle import route, run, template, request, debug
 
+
+# Prefer HTTPS connection
 host="http://localhost:9191/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
 auth="token"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
 
@@ -32,7 +34,7 @@ def wrongUrl():
     return("Please log into PaperCut and set top up your account from there")
 
 @route('/simpleTopUpBalance/<user>')
-def setSharedAccount(user):
+def promptUser(user):
 
     if not proxy.api.isUserExists(auth, user):
         return("Can't find user {}".format(user))
