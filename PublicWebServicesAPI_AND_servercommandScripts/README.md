@@ -13,6 +13,7 @@ knowledge base [article](https://www.papercut.com/kb/Main/TopTipsForUsingThePubl
 * findAllUsersInGroup.py: Finds all users in a specific user group (Python)
 * list-shared-account-balances: Bash script to list all shared accounts and the balance
 * list-shared-account-balances.ps1: Windows Powershell script to list all shared accounts and the balance
+* list-user-with-no-card-no-1.ps1: Windows Powershell script to list all users with no primary card number assigned
 * listGroupMembership.sh: For every user account, list group membership (Bash script)
 * loadSharedAcconts.py: Python program that generates a large file of shared accounts and loads into PaperCut.
   Shows how to use the `getTaskStatus()` method
