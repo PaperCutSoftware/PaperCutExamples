@@ -21,7 +21,7 @@ f = open(fileName, 'w')
 for p in range(20):
     f.write("parentAccount{}\t\t\t\t\t\t\t\t\t\t\n".format(p))
     for a in range(100):
-        f.write("{}LongParentAccountname\t{}ReallyLongSharedAccountName\t\t{}x{}\t10\t\t\t[All Users]\t\t\t\n".format(p, a, p, a))
+        f.write("{0:02}LongParentAccountname\t{1:02}ReallyLongSharedAccountName\t\t{0:02}x{1:02}\t10\t\t\t[All Users]\t\t\t\n".format(p, a))
 
 f.close()
 print("Data Import file created")
