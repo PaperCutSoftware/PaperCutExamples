@@ -8,7 +8,7 @@
 # (in the PaperCut user web page) to the web app, the user identification details
 # is passed as part of the URL. This is explained at:
 
-# http://www.papercut.com/products/ng/manual/ch-customization-user-web-pages.html#Additional-Links-in-the-Navigation-Men
+# https://www.papercut.com/support/resources/manuals/ng-mf/common/topics/customize-user-web-pages.html#customize-user-web-pages-nav-links
 
 # The URL neeeds to something like http://localhost:8080/getsharedaccountselection/%user%
 
