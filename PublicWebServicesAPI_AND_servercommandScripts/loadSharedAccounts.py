@@ -19,9 +19,9 @@ fileName = "/tmp/import.file"
 f = open(fileName, 'w')
 
 for p in range(20):
-    f.write("parentAccount{}\t\t\t\t\t\t\t\t\t\t\n".format(p))
+    f.write("parentAccount{0:02}\t\tY\tPPx{0:02}\t10.0\tN\t[All Users]\t\t\t\t\n".format(p))
     for a in range(100):
-        f.write("{0:02}LongParentAccountname\t{1:02}ReallyLongSharedAccountName\t\t{0:02}x{1:02}\t10\t\t\t[All Users]\t\t\t\n".format(p, a))
+        f.write("{0:02}LongParentAccountname\t{1:02}ReallyLongSharedAccountName\t\t{0:02}x{1:02}\t10.0\t\t\t[All Users]\t\t\t\n".format(p, a))
 
 f.close()
 print("Data Import file created")
@@ -34,11 +34,11 @@ try:
     proxy.api.batchImportSharedAccounts(auth, fileName, False, False)
 except xmlrpc.client.Fault as error:
     print("\ncalled batchImportSharedAccounts(). Return fault is {}".format(error.faultString))
-    sys.exit(1)
+    exit(1)
 except xmlrpc.client.ProtocolError as error:
     print("\nA protocol error occurred\nURL: {}\nHTTP/HTTPS headers: {}\nError code: {}\nError message: {}".format(
         error.url, error.headers, error.errcode, error.errmsg))
-    sys.exit(1)
+    exit(1)
 
 status = proxy.api.getTaskStatus()
 while not status["completed"]:
