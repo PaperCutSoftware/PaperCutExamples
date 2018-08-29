@@ -6,6 +6,7 @@ and our [wiki](https://github.com/PaperCutSoftware/PaperCutExamples/wiki).
 
 * `assignPrintersToServerGroups.sh`: Bash script to assign printers to specific group depending on the print server they are attached to
 * `allUserInDelegationGroup.sh`: Bash script to add all users into a single internal group for delegation purposes
+* `csvListOfPrintersAndFieldValue.sh`: Bash script to print csv list of all printers and the value of a specific property. Defaults to the `disabled` property
 * `delete-users-matching-regex`: Small bash script to delete any user whose username matches a regular expression
 * `delete-users-matching-regex.ps1`: Small Windows Powershell script to delete any user whose username matches a regular expression
 * `displaySharedBalanceWhenAutoChargeToSharedAccount.py`: Lists all users
