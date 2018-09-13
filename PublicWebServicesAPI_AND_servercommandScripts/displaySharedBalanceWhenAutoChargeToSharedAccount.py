@@ -5,8 +5,9 @@
 
 import xmlrpc.client
 import sys
+from ssl import create_default_context, Purpose
 
-host="http://localhost:9191/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
+host="https://localhost:9192/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
 
 auth="password"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
 
@@ -16,7 +17,8 @@ if len(sys.argv) != 2:
 
 user=sys.argv[1]
 
-proxy = xmlrpc.client.ServerProxy(host)
+proxy = xmlrpc.client.ServerProxy(host, verbose=False,
+      context = create_default_context(Purpose.CLIENT_AUTH))
 
 if not proxy.api.isUserExists(auth, user):
     print("Can't find user {}".format(user))

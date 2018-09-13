@@ -3,13 +3,15 @@
 # Find all the users in a specific department
 
 import xmlrpc.client
+from ssl import create_default_context, Purpose
 import sys
 
-host="http://localhost:9191/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
+host="https://localhost:9192/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
 
 auth="token"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
 
-proxy = xmlrpc.client.ServerProxy(host)
+proxy = xmlrpc.client.ServerProxy(host, verbose=False,
+      context = create_default_context(Purpose.CLIENT_AUTH))
 
 if len(sys.argv) != 2:
     print("No department name provided")
