@@ -74,8 +74,8 @@ while True:
                   server,
                   printer,
                   jsonResponse["status"]))
-
-        print("Status for printer {}/{} is {}".format(
+        else:
+            print("Status for printer {}/{} is {}".format(
                   server,
                   printer,
                   jsonResponse["status"]))
