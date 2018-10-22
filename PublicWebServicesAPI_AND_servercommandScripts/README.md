@@ -17,6 +17,8 @@ and our [wiki](https://github.com/PaperCutSoftware/PaperCutExamples/wiki).
 * `list-shared-account-balances.ps1`: Windows Powershell script to list all shared accounts and the balance
 * `list-user-with-no-card-no-1.ps1`: Windows Powershell script to list all users with no primary card number assigned
 * `listGroupMembership.sh`: For every user account, list group membership (Bash script)
+* `listPrinterStatuses.py`: Python program to show the use of `printer-id` property via the
+web services API to streamline using the health interface API
 * `loadSharedAcconts.py`: Python program that generates a large file of shared accounts and loads into PaperCut.
   Shows how to use the `getTaskStatus()` method
 * `removeTempCardsJob.py`: Removes all temp cards from PaperCut, if the cards are listed in a table.
