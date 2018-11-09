@@ -24,6 +24,8 @@ web services API to streamline using the health interface API
 * `removeTempCardsJob.py`: Removes all temp cards from PaperCut, if the cards are listed in a table.
   Easy to extend to use an external database (Python)
 * `removeUsersListedInFile`: Bash script that removes any user _NOT_ listed in a file
+* `setAccountSelectionMode.py`: Python script to set account selection mode depending on number shared accounts
+user can access
 * `simpleTopUpBalance`: Small and ugly web application to allow users to top up their PaperCut personal account balance
 * `swapCardNumbers.sh`: Bash script to swap the primary-card-number and secondary-card-number fields for all users
 * `swapCardNumbers.ps1`: Powershell script to swap the primary-card-number and secondary-card-number fields for all users.
