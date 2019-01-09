@@ -4,6 +4,7 @@ For more information about using `server-command` or the web services API see ou
 knowledge base [article](https://www.papercut.com/kb/Main/TopTipsForUsingThePublicWebServicesAPI)
 and our [wiki](https://github.com/PaperCutSoftware/PaperCutExamples/wiki).
 
+* `addInfoToCSVreport.py`: Python script to add extra information a shared account report as a post process
 * `assignPrintersToServerGroups.sh`: Bash script to assign printers to specific group depending on the print server they are attached to
 * `allUserInDelegationGroup.sh`: Bash script to add all users into a single internal group for delegation purposes
 * `csvListOfPrintersAndFieldValue.sh`: Bash script to print csv list of all printers and the value of a specific property. Defaults to the `disabled` property
@@ -26,6 +27,7 @@ web services API to streamline using the health interface API
 * `removeUsersListedInFile`: Bash script that removes any user _NOT_ listed in a file
 * `setAccountSelectionMode.py`: Python script to set account selection mode depending on number shared accounts
 user can access
+* `simpleRefundBalance`: Small and ugly web application to allow users to request a refund of thier PaperCut balance
 * `simpleTopUpBalance`: Small and ugly web application to allow users to top up their PaperCut personal account balance
 * `swapCardNumbers.sh`: Bash script to swap the primary-card-number and secondary-card-number fields for all users
 * `swapCardNumbers.ps1`: Powershell script to swap the primary-card-number and secondary-card-number fields for all users.
