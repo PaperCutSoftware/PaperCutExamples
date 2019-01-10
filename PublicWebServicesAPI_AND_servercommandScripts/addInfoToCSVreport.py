@@ -7,7 +7,7 @@ from xmlrpc.client import ServerProxy
 from ssl import create_default_context, Purpose
 
 
-# Script to add user account notes to account_configurations.csv
+# Script to user account notes to the Shared account configuration report(account_configurations.csv)
 
 host="https://localhost:9192/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
 
