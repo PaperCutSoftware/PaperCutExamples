@@ -7,22 +7,23 @@ from xmlrpc.client import ServerProxy
 from ssl import create_default_context, Purpose
 
 
-# #TODO Add a note about which report this example works with.
-
+# Script to add user account notes to account_configurations.csv
 
 host="https://localhost:9192/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
 
 auth="token"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
 
 proxy = ServerProxy(host, verbose=False,
-      context = create_default_context(Purpose.CLIENT_AUTH))
+      context = create_default_context(Purpose.CLIENT_AUTH))#Create new ServerProxy Instance
 
-csv_reader = reader(stdin,  delimiter=',')
+# #TODO open and manipulate CSV
+csv_reader = reader(stdin,  delimiter=',') #Read in standard data
 line_count = 0
 for row in csv_reader:
-    if line_count == 2:
+    
+    if line_count == 1: #Header row
         row.insert(4,"Notes data")
     elif line_count > 2:
-        row.insert(4,proxy.api.getSharedAccountProperty(auth, row[0] + "\\" + row[2], "notes"))
+        row.insert(4,proxy.api.getSharedAccountProperty(auth, row[0] + "\\" + row[2], "notes")) #Add Note data for shared account(Parent or child)
     print(", ".join(row))
     line_count += 1
