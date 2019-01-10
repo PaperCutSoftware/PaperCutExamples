@@ -17,7 +17,7 @@ proxy = ServerProxy(host, verbose=False,
       context = create_default_context(Purpose.CLIENT_AUTH))#Create new ServerProxy Instance
 
 # #TODO open and manipulate CSV
-csv_reader = reader(stdin,  delimiter=',') #Read in standard input
+csv_reader = reader(stdin,  delimiter=',') #Read in standard input stream
 line_count = 0
 for row in csv_reader:
     
