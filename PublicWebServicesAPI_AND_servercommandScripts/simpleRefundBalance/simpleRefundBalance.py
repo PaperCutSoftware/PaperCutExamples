@@ -27,7 +27,7 @@ from bottle import route, run, template, request, debug
 
 # Prefer HTTPS connection
 host="https://localhost:9192/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
-auth="password"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
+auth="token"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
 
 proxy = xmlrpc.client.ServerProxy(host, verbose=False,
       context = create_default_context(Purpose.CLIENT_AUTH))
@@ -42,7 +42,7 @@ def promptUser(user):
     if not proxy.api.isUserExists(auth, user):
         return("Can't find user {}".format(user))
 
-    userCredit = proxy.api.getUserAccountBalance(auth, user)
+    userCredit = "{0:.2f}".format(proxy.api.getUserAccountBalance(auth, user))
 
     return template('promptForRefund',user=user, userCredit=userCredit)
 
@@ -56,12 +56,12 @@ def topUp(user):
     userCredit = proxy.api.getUserAccountBalance(auth, user)
 
     if userCredit != refundAmount:
-        return "Error: User Credit Balance and Refund Requested do not match for user {}".format(user)
+        return "Error: User Credit Balance and Refund Requested do not match for user: {}".format(user)
 
     proxy.api.adjustUserAccountBalance(auth, user, -1 * refundAmount, "Money refunded by the Simple Refund Page")
 
     return 'Updated balance is now {}<br><br>Please close this tab/window and return to PaperCut'.format(
-            proxy.api.getUserAccountBalance(auth, user))
+            "{0:.2f}".format(proxy.api.getUserAccountBalance(auth, user)))
 
     # now transfer the value to the external student system
 
