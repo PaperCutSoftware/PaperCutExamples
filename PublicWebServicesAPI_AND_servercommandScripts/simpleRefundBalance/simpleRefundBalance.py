@@ -5,7 +5,7 @@
 
 # Add a custom URL to the PaperCut user web page, which is used by end users
 # when they want to request a refund from their PaperCut personal account. The url
-# should refer to this small web app When the user clicks on the URL link
+# should refer to this small web app. When the user clicks on the URL link
 # (in the PaperCut user web page) to the web app, the user identification details
 # are passed as part of the URL. This is explained at:
 
@@ -21,13 +21,13 @@ from ssl import create_default_context, Purpose
 
 # Bottle does not depend on any external libraries.
 # You can just download bottle.py into your project directory and using
-# $ wget http://bottlepy.org/bottle.py
+# $ wget http://bottlepy.org/bottle.py or you can install in the normal fashion
 from bottle import route, run, template, request, debug
 
 
 # Prefer HTTPS connection
 host="https://localhost:9192/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
-auth="token"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
+auth="token"  # Value defined in advanced config property "auth.webservices.auth-token". Should be a long random string
 
 proxy = xmlrpc.client.ServerProxy(host, verbose=False,
       context = create_default_context(Purpose.CLIENT_AUTH))
@@ -42,9 +42,16 @@ def promptUser(user):
     if not proxy.api.isUserExists(auth, user):
         return("Can't find user {}".format(user))
 
-    userCredit = "{0:.2f}".format(proxy.api.getUserAccountBalance(auth, user))
+    userCredit = proxy.api.getUserAccountBalance(auth, user)
 
-    return template('promptForRefund',user=user, userCredit=userCredit)
+    if userCredit <= 0.0 :
+        return("<p>You currently have a PaperCut balance of {0:.2f} and cannot obtain a refund</p>".format(userCredit))
+
+    userCredit = "{0:.2f}".format(userCredit)
+
+    userName = proxy.api.getUserProperty(auth, user, "full-name")
+    
+    return template('promptForRefund',user=user, userName=userName, userCredit=userCredit)
 
 @route('/refund/<user>')
 def topUp(user):
@@ -60,10 +67,10 @@ def topUp(user):
 
     proxy.api.adjustUserAccountBalance(auth, user, -1 * refundAmount, "Money refunded by the Simple Refund Page")
 
-    return 'Updated balance is now {}<br><br>Please close this tab/window and return to PaperCut'.format(
-            "{0:.2f}".format(proxy.api.getUserAccountBalance(auth, user)))
+    return "<p>Updated balance is now {}</p><p>Please close this tab/window and return to PaperCut</p><p>We would email you at {}, but email it not currently configured</p>".format(
+            "{0:.2f}".format(proxy.api.getUserAccountBalance(auth, user)),proxy.api.getUserProperty(auth, user, "email"))
 
     # now transfer the value to the external student system
 
-run(host='localhost', port=8081, debug=True, reloader=True)
-
+if __name__ == "__main__":
+    run(host='localhost', port=8081, debug=True, reloader=True)
