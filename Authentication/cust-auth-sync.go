@@ -58,14 +58,8 @@ func (db userDBT) findUser(userName string) (userData userDataT, userFound bool)
 	for user, attributes := range db {
 		if userName == user {
 			return userDataT{
-				Username: user,
-				userAttributesT: userAttributesT{
-					Fullname: attributes.Fullname,
-					Email:    attributes.Email,
-					Dept:     attributes.Dept,
-					Office:   attributes.Office,
-					Cardno:   attributes.Cardno,
-					Password: attributes.Password}}, true
+				Username:        user,
+				userAttributesT: attributes}, true
 		}
 	}
 	return userDataT{}, false
@@ -147,8 +141,6 @@ func main() {
 		fmt.Scan(&userName, &password)
 
 		user, userFound := userDB.findUser(userName)
-
-		log.Printf("username is %v, userdata is %v, password is %v", userName, user, password)
 
 		if userFound && user.Password == password {
 			fmt.Printf("OK\n%s\n", user.Username)
