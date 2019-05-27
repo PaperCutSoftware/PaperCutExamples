@@ -38,5 +38,5 @@ If you want to create a test file manually you can use the following tools
 If your file is not in MS Windows format use dos2unix tools to create MS Windows format e.g.  unix2dos -f -u -b  file.csv
 
 Once you understand the process then you can consider creating a standalone utility to create batches of cards.
-The program createTopUpCards.py is a working exampe of such a utility that you will need to modify for your locale
-and requirements.
+The program [createTopUpCards.py](createTopUpCards.py) is a working exampe of such a utility that
+you will need to modify for your locale and requirements.
