@@ -9,7 +9,7 @@
 
 
 from datetime import date, timedelta
-from random import sample
+from random import sample, seed
 from pdfdocument.document import PDFDocument
 import locale
 
@@ -27,6 +27,10 @@ Card ID:\t{:09d}
 
 """
 
+# Initialise the random number generator
+
+seed()
+
 batchID = input("Please enter the batch ID ")
 cardValue = float(input(f'Please enter value to appear on each card '))
 numberOfCards = int(input(f'Please enter number of cards to created in batch "{batchID}" '))
@@ -34,7 +38,6 @@ expiryDays = int(input("How many days are these cards valid (PaperCut NG will no
 
 
 pdf = PDFDocument("printFile.pdf")
-
 
 pdf.init_report()
 
@@ -45,13 +48,11 @@ importFile = open("importFile", mode="w", newline="\r\n", encoding='utf-16')
 importFile.write("CardNumber,BatchID,ValueNumber,Value,ExpDate,ExpDateDisplay\n")
 
 # Modify to as needed
-expDate = date.today() + timedelta(days=14) # expire all the cards in two weeks
+expDate = date.today() + timedelta(days=14) # expire all the cards -- default to 14 days
+displayExpDate = expDate.strftime("%x")
+isoExpDate = expDate.isoformat()
 
 displayValue = locale.currency( cardValue, grouping=True )
-
-displayExpDate = expDate.strftime("%x")
-
-isoExpDate = expDate.isoformat()
 
 for cardNumber in sample(range(100000000), numberOfCards):
 
