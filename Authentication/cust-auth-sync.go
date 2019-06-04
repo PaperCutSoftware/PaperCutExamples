@@ -54,6 +54,14 @@ type userDataT struct {
 	userAttributesT
 }
 
+func (db userDBT) saveUser(userData userDataT) (err error) {
+	if _, found := db.findUser(userData.Username); found {
+		return fmt.Errorf("Duplicate user. Can't insert %v", userData.Username)
+	}
+	db[userData.Username] = userData.userAttributesT
+	return nil
+}
+
 func (db userDBT) findUser(userName string) (userData userDataT, userFound bool) {
 	for user, attributes := range db {
 		if userName == user {
@@ -75,15 +83,16 @@ type configT struct {
 	GDB map[string][]string `json:"groupdata"`
 }
 
+// Create some sample data and save it to disk
 func saveConfig(filename string) (userDBT, map[string][]string, error) {
 
 	fmt.Fprintf(os.Stderr, "Creating new default user and group database in %v\n", filename)
 	userDB := make(userDBT)
 	groupDB := make(map[string][]string)
 
-	userDB["john"] = userAttributesT{Fullname: "John Smith", Email: "johns@here.com", Dept: "Accounts", Office: "Melbourne", Cardno: "1234", Password: "password1"}
-	userDB["jane"] = userAttributesT{Fullname: "Jane Rodgers", Email: "janer@here.com", Dept: "Sales", Office: "Docklands", Cardno: "5678", Password: "password2"}
-	userDB["ahmed"] = userAttributesT{Fullname: "Ahmed Yakubb", Email: "ahmedy@here.com", Dept: "Marketing", Office: "Home Office", Cardno: "4321", Password: "password3"}
+	userDB.saveUser(userDataT{Username: "john", userAttributesT: userAttributesT{Fullname: "John Smith", Email: "johns@here.com", Dept: "Accounts", Office: "Melbourne", Cardno: "1234", Password: "password1"}})
+	userDB.saveUser(userDataT{Username: "jane", userAttributesT: userAttributesT{Fullname: "Jane Rodgers", Email: "janer@here.com", Dept: "Sales", Office: "Docklands", Cardno: "5678", Password: "password2"}})
+	userDB.saveUser(userDataT{Username: "ahmed", userAttributesT: userAttributesT{Fullname: "Ahmed Yakubb", Email: "ahmedy@here.com", Dept: "Marketing", Office: "Home Office", Cardno: "4321", Password: "password3"}})
 
 	groupDB["groupA"] = []string{"john"}
 	groupDB["groupB"] = []string{"jane", "ahmed"}
@@ -98,6 +107,7 @@ func saveConfig(filename string) (userDBT, map[string][]string, error) {
 	return userDB, groupDB, ioutil.WriteFile(filename, bytes, 0644)
 }
 
+// Read user and group database from disk
 func getConfig() (udb userDBT, gdb map[string][]string, err error) {
 
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
@@ -219,6 +229,7 @@ func main() {
 				}
 				if os.Args[2] == "is-user-in-group" {
 					fmt.Println("N")
+					os.Exit(-1)
 				}
 				os.Exit(0)
 			}
