@@ -8,7 +8,7 @@ import sys
 
 host="https://localhost:9192/rpc/api/xmlrpc" # If not localhost then the client address will need to be whitelisted in PaperCut
 
-auth="token"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
+auth="secret"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
 
 #proxy = xmlrpc.client.ServerProxy(host, verbose=True, transport=xmlrpc.client.SafeTransport, context=ctx)
 proxy = xmlrpc.client.ServerProxy(host, verbose=False,
