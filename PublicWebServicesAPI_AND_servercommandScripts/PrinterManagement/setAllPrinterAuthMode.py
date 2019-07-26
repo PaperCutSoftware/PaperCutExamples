@@ -57,7 +57,8 @@ if __name__ == "__main__":
 
             deviceName = splitID[1]
 
-            print(f"Configuring  device {deviceName}, result is {'success' if proxy.api.setPrinterProperties(auth, 'device', deviceName, settings) else 'failure'}")
+            print(f"Configuring device {deviceName}, result is {'success' if proxy.api.setPrinterProperties(auth, 'device', deviceName, settings) else 'failure'}")
+            print(f"Applying new settings to  device {deviceName}, result is {'success' if proxy.api.applyDeviceSettings(auth, deviceName) else 'failure'}")
 
         if len(printerList) < limit:
             break # We have reached the end
