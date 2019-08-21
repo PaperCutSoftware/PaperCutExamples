@@ -2,6 +2,7 @@
 package main
 
 // Build
+//  go get github.com/divan/gorilla-xmlrpc/xml
 //  go build cust-auth-sync.go
 
 // Install:
@@ -29,24 +30,92 @@ package main
 
 // This will create the database in [papercut install dir]/server/custom/local/config.json
 
+// Note: This program assumes the advanced config key user-source.update-user-details-card-id
+// is NOT set to "N"
+
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/divan/gorilla-xmlrpc/xml"
 )
+
+// Stuff to call the PaperCut web services API over XML-RPC
+
+type client struct {
+	uri       string
+	port      string
+	authToken string
+}
+
+// Make the RPC call
+func xmlRpcCall(c client, method string, args interface{}, reply interface{}) error {
+	buf, _ := xml.EncodeClientRequest(method, args)
+	response, err := http.Post(c.uri+":"+c.port+"/rpc/api/xmlrpc", "text/xml", bytes.NewBuffer(buf))
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close() // Can't defer until we know we have a response
+	err = xml.DecodeClientResponse(response.Body, reply)
+	return err
+}
+
+func (c client) getConfigValue(keyName string) (string, error) {
+	var args interface{}
+
+	args = &struct {
+		Auth    string
+		KeyName string
+	}{
+		c.authToken,
+		keyName,
+	}
+
+	var reply struct{ ReturnValue string }
+	err := xmlRpcCall(c, "api.getConfigValue", args, &reply)
+	return reply.ReturnValue, err
+}
+
+func isPaperCutConfiguredForExtraUserData(token string) (ret bool) {
+	papercutServer := "http://localhost"
+	papercutPort := "9191"
+
+	r, err := client{papercutServer, papercutPort, token}.getConfigValue("user-source.update-user-details-card-id")
+
+	if err == nil {
+		ret = r != "N"
+	} else {
+		fmt.Fprintln(os.Stderr, "Cannot use web services API. Please configure", err)
+		ret = false
+	}
+
+	if ret {
+		fmt.Fprintln(os.Stderr, "PaperCut MF/NG is configured for additional user attributes (other emails and secondary card number)")
+	} else {
+		fmt.Fprintln(os.Stderr, "PaperCut MF/NG is configured for minimal user attributes")
+	}
+	return ret
+}
+
+// End of web services helper
 
 type userDBT map[string]userAttributesT
 
 type userAttributesT struct {
-	Fullname string `json:"fullname"`
-	Email    string `json:"email"`
-	Dept     string `json:"dept"`
-	Office   string `json:"office"`
-	Cardno   string `json:"cardno"`
-	Password string `json:"password"`
+	Fullname        string `json:"fullname"`
+	Email           string `json:"email"`
+	Dept            string `json:"dept"`
+	Office          string `json:"office"`
+	PrimaryCardno   string `json:"primarycardno"`
+	OtherEmail      string `json:otheremail`
+	SecondaryCardno string `json:secondarycardno`
+	Password        string `json:"password"`
 }
 
 type userDataT struct {
@@ -73,42 +142,64 @@ func (db userDBT) findUser(userName string) (userData userDataT, userFound bool)
 	return userDataT{}, false
 }
 
+var extraUserData bool
+
 func (user userDataT) String() (userString string) {
 	// Don't return the user Password -- it's meant to be a secret!
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s", user.Username, user.Fullname, user.Email, user.Dept, user.Office, user.Cardno)
+	if extraUserData {
+		return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
+			user.Username,
+			user.Fullname,
+			user.Email,
+			user.Dept,
+			user.Office,
+			user.PrimaryCardno,
+			user.OtherEmail,
+			user.SecondaryCardno)
+	} else {
+		return fmt.Sprintf("%s\t%s\t%s\t%s\t%s",
+			user.Username,
+			user.Fullname,
+			user.Email,
+			user.Dept,
+			user.Office)
+	}
 }
 
 type configT struct {
-	UDB userDBT             `json:"userdata"`
-	GDB map[string][]string `json:"groupdata"`
+	WebServicesToken string              `json:auth.webservices.auth-token`
+	UDB              userDBT             `json:"userdata"`
+	GDB              map[string][]string `json:"groupdata"`
 }
 
 // Create some sample data and save it to disk
-func saveConfig(filename string) (userDBT, map[string][]string, error) {
+func saveConfig(filename string) (string, userDBT, map[string][]string, error) {
 
 	fmt.Fprintf(os.Stderr, "Creating new default user and group database in %v\n", filename)
 	userDB := make(userDBT)
 	groupDB := make(map[string][]string)
 
-	userDB.saveUser(userDataT{Username: "john", userAttributesT: userAttributesT{Fullname: "John Smith", Email: "johns@here.com", Dept: "Accounts", Office: "Melbourne", Cardno: "1234", Password: "password1"}})
-	userDB.saveUser(userDataT{Username: "jane", userAttributesT: userAttributesT{Fullname: "Jane Rodgers", Email: "janer@here.com", Dept: "Sales", Office: "Docklands", Cardno: "5678", Password: "password2"}})
-	userDB.saveUser(userDataT{Username: "ahmed", userAttributesT: userAttributesT{Fullname: "Ahmed Yakubb", Email: "ahmedy@here.com", Dept: "Marketing", Office: "Home Office", Cardno: "4321", Password: "password3"}})
+	userDB.saveUser(userDataT{Username: "john", userAttributesT: userAttributesT{Fullname: "John Smith", Email: "johns@here.com", Dept: "Accounts", Office: "Melbourne", PrimaryCardno: "1234", OtherEmail: "personal1@webmail.com", SecondaryCardno: "01234", Password: "password1"}})
+	userDB.saveUser(userDataT{Username: "jane", userAttributesT: userAttributesT{Fullname: "Jane Rodgers", Email: "janer@here.com", Dept: "Sales", Office: "Docklands", PrimaryCardno: "5678", OtherEmail: "personal2@webmail.com", SecondaryCardno: "05678", Password: "password2"}})
+	userDB.saveUser(userDataT{Username: "ahmed", userAttributesT: userAttributesT{Fullname: "Ahmed Yakubb", Email: "ahmedy@here.com", Dept: "Marketing", Office: "Home Office", PrimaryCardno: "4321", OtherEmail: "personal2@webmail.com", SecondaryCardno: "04321", Password: "password3"}})
 
 	groupDB["groupA"] = []string{"john"}
 	groupDB["groupB"] = []string{"jane", "ahmed"}
 
-	c := configT{userDB, groupDB}
+	token := "change-me"
+
+	c := configT{token, userDB, groupDB}
 
 	bytes, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
-		return userDBT{}, map[string][]string{}, err
+		return token, userDBT{}, map[string][]string{}, err
 	}
 
-	return userDB, groupDB, ioutil.WriteFile(filename, bytes, 0644)
+	return token, userDB, groupDB, ioutil.WriteFile(filename, bytes, 0644)
 }
 
 // Read user and group database from disk
-func getConfig() (udb userDBT, gdb map[string][]string, err error) {
+func getConfig() (token string, udb userDBT, gdb map[string][]string, err error) {
 
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
@@ -120,30 +211,32 @@ func getConfig() (udb userDBT, gdb map[string][]string, err error) {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not read config file %v\n", err)
-		udb, gdb, err := saveConfig(filename)
+		token, udb, gdb, err := saveConfig(filename)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
-		return udb, gdb, err
+		return token, udb, gdb, err
 	}
 
 	var c configT
 	err = json.Unmarshal(bytes, &c)
 	if err != nil {
-		return userDBT{}, map[string][]string{}, err
+		return token, userDBT{}, map[string][]string{}, err
 	}
 
-	return c.UDB, c.GDB, nil
+	return c.WebServicesToken, c.UDB, c.GDB, nil
 }
 
 func main() {
 
-	userDB, groupDB, err := getConfig()
+	token, userDB, groupDB, err := getConfig()
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "config error")
 		os.Exit(-1)
 	}
+
+	extraUserData = isPaperCutConfiguredForExtraUserData(token)
 
 	if len(os.Args) == 1 {
 		var userName, password string
@@ -163,7 +256,7 @@ func main() {
 	}
 
 	if len(os.Args) == 2 || os.Args[1] != "-" {
-		fmt.Fprintf(os.Stderr, "Incorrect argunments passed: %v\n", os.Args[1:])
+		fmt.Fprintf(os.Stderr, "Incorrect arguments passed: %v\n", os.Args[1:])
 		os.Exit(-1)
 	}
 
