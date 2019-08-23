@@ -20,9 +20,10 @@ package main
 
 // This is a demo program so it comes with a default sample database. The
 // 1st time the program is run it will create a json file with the sample
-// data. Edit this file at any time to change the user and group databases.
+// data. Edit this file at any time to change the user and group databases,
+// and the web services API token.
 
-// Note if you don't want use the sample data, then after copying the binary
+// Note after copying the binary
 // into the [papercut install dir]/server/custom/local directory, but before
 // performing the 1st user sync you can create the sample database and then
 // edit the data. run the command
@@ -31,7 +32,7 @@ package main
 // This will create the database in [papercut install dir]/server/custom/local/config.json
 
 // Note: This program assumes the advanced config key user-source.update-user-details-card-id
-// is NOT set to "N"
+// is set to "Y"
 
 import (
 	"bytes"
@@ -82,25 +83,33 @@ func (c client) getConfigValue(keyName string) (string, error) {
 	return reply.ReturnValue, err
 }
 
-func isPaperCutConfiguredForExtraUserData(token string) (ret bool) {
+func getConfigValue(token string, configName string) string {
 	papercutServer := "http://localhost"
 	papercutPort := "9191"
 
-	r, err := client{papercutServer, papercutPort, token}.getConfigValue("user-source.update-user-details-card-id")
+	r, err := client{papercutServer, papercutPort, token}.getConfigValue(configName)
 
 	if err == nil {
-		ret = r != "N"
-	} else {
-		fmt.Fprintln(os.Stderr, "Cannot use web services API. Please configure", err)
-		ret = false
+		return r
 	}
 
-	if ret {
-		fmt.Fprintln(os.Stderr, "PaperCut MF/NG is configured for additional user attributes (other emails and secondary card number)")
-	} else {
-		fmt.Fprintln(os.Stderr, "PaperCut MF/NG is configured for minimal user attributes")
+	fmt.Fprintln(os.Stderr, "Cannot use web services API. Please configure", err)
+	return ""
+}
+
+func areUserNameAliasesEnabled(token string) (ret bool) {
+
+	r := getConfigValue(token, "secondary-user-name.enabled")
+
+	if len(r) > 0 {
+		if r != "N" {
+			fmt.Fprintln(os.Stderr, "PaperCut MF/NG is configured for secondary usernames (aliases)")
+			return true
+		} else {
+			fmt.Fprintln(os.Stderr, "PaperCut MF/NG is NOT configured for secondary usernames (aliases)")
+		}
 	}
-	return ret
+	return false
 }
 
 // End of web services helper
@@ -115,6 +124,9 @@ type userAttributesT struct {
 	PrimaryCardno   string `json:"primarycardno"`
 	OtherEmail      string `json:otheremail`
 	SecondaryCardno string `json:secondarycardno`
+	UserAlias       string `json:useralias`
+	HomeDirectory   string `json:homedirectory`
+	PIN             string `json:pin`
 	Password        string `json:"password"`
 }
 
@@ -142,28 +154,30 @@ func (db userDBT) findUser(userName string) (userData userDataT, userFound bool)
 	return userDataT{}, false
 }
 
-var extraUserData bool
+var userAliasConfigured bool
 
-func (user userDataT) String() (userString string) {
-	// Don't return the user Password -- it's meant to be a secret!
-	if extraUserData {
-		return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-			user.Username,
-			user.Fullname,
-			user.Email,
-			user.Dept,
-			user.Office,
-			user.PrimaryCardno,
-			user.OtherEmail,
-			user.SecondaryCardno)
-	} else {
-		return fmt.Sprintf("%s\t%s\t%s\t%s\t%s",
-			user.Username,
-			user.Fullname,
-			user.Email,
-			user.Dept,
-			user.Office)
+func (user userDataT) String() string {
+
+	userAlias := ""
+
+	if userAliasConfigured {
+		userAlias = user.UserAlias
 	}
+
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
+		user.Username,
+		user.Fullname,
+		user.Email,
+		user.Dept,
+		user.Office,
+		user.PrimaryCardno,
+		user.OtherEmail,
+		user.SecondaryCardno,
+		userAlias,
+		user.HomeDirectory,
+		user.PIN,
+	)
+	// Don't return the user Password -- it's meant to be a secret!
 }
 
 type configT struct {
@@ -179,9 +193,9 @@ func saveConfig(filename string) (string, userDBT, map[string][]string, error) {
 	userDB := make(userDBT)
 	groupDB := make(map[string][]string)
 
-	userDB.saveUser(userDataT{Username: "john", userAttributesT: userAttributesT{Fullname: "John Smith", Email: "johns@here.com", Dept: "Accounts", Office: "Melbourne", PrimaryCardno: "1234", OtherEmail: "personal1@webmail.com", SecondaryCardno: "01234", Password: "password1"}})
-	userDB.saveUser(userDataT{Username: "jane", userAttributesT: userAttributesT{Fullname: "Jane Rodgers", Email: "janer@here.com", Dept: "Sales", Office: "Docklands", PrimaryCardno: "5678", OtherEmail: "personal2@webmail.com", SecondaryCardno: "05678", Password: "password2"}})
-	userDB.saveUser(userDataT{Username: "ahmed", userAttributesT: userAttributesT{Fullname: "Ahmed Yakubb", Email: "ahmedy@here.com", Dept: "Marketing", Office: "Home Office", PrimaryCardno: "4321", OtherEmail: "personal2@webmail.com", SecondaryCardno: "04321", Password: "password3"}})
+	userDB.saveUser(userDataT{Username: "john", userAttributesT: userAttributesT{Fullname: "John Smith", Email: "johns@here.com", Dept: "Accounts", Office: "Melbourne", PrimaryCardno: "1234", OtherEmail: "personal1@webmail.com", SecondaryCardno: "01234", UserAlias: "user1", HomeDirectory: "\\\\server\\dfs\\homedirs\\user1", PIN: "1234", Password: "password1"}})
+	userDB.saveUser(userDataT{Username: "jane", userAttributesT: userAttributesT{Fullname: "Jane Rodgers", Email: "janer@here.com", Dept: "Sales", Office: "Docklands", PrimaryCardno: "5678", OtherEmail: "personal2@webmail.com", SecondaryCardno: "05678", UserAlias: "user2", HomeDirectory: "\\\\server\\dfs\\homedirs\\user2", PIN: "1234", Password: "password2"}})
+	userDB.saveUser(userDataT{Username: "ahmed", userAttributesT: userAttributesT{Fullname: "Ahmed Yakubb", Email: "ahmedy@here.com", Dept: "Marketing", Office: "Home Office", PrimaryCardno: "4321", OtherEmail: "personal2@webmail.com", SecondaryCardno: "04321", UserAlias: "user3", HomeDirectory: "\\\\server\\dfs\\homedirs\\user3", PIN: "1234", Password: "password3"}})
 
 	groupDB["groupA"] = []string{"john"}
 	groupDB["groupB"] = []string{"jane", "ahmed"}
@@ -236,8 +250,6 @@ func main() {
 		os.Exit(-1)
 	}
 
-	extraUserData = isPaperCutConfiguredForExtraUserData(token)
-
 	if len(os.Args) == 1 {
 		var userName, password string
 
@@ -259,6 +271,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Incorrect arguments passed: %v\n", os.Args[1:])
 		os.Exit(-1)
 	}
+
+	userAliasConfigured = areUserNameAliasesEnabled(token)
 
 	if os.Args[2] == "is-valid" {
 		fmt.Println("Y")
