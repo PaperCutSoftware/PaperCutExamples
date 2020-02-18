@@ -17,9 +17,8 @@
 import xmlrpc.client
 import sys
 
-# Bottle does not depend on any external libraries.
-# You can just download bottle.py into your project directory and using
-# $ wget http://bottlepy.org/bottle.py
+# Bottle is a lightweight web framework
+# pip install bottle
 from bottle import route, run, template, request, debug, redirect
 
 
