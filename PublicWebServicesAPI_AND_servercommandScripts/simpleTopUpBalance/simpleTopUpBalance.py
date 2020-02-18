@@ -31,6 +31,7 @@ proxy = xmlrpc.client.ServerProxy(host)
 
 # The user is sent back to the Summary page as if they had just logged in,
 # assuming their session has not timed out
+# Therefore return url should be consistent
 redirect_url = ''
 
 
