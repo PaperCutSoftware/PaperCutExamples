@@ -29,6 +29,8 @@ auth = "token"  # Value defined in advanced config property "auth.webservices.au
 
 proxy = xmlrpc.client.ServerProxy(host)
 
+# The user is sent back to the Summary page as if they had just logged in,
+# assuming their session has not timed out
 redirect_url = ''
 
 
