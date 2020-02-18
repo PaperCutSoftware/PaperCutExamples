@@ -10,7 +10,7 @@
 
 # https://www.papercut.com/products/ng/manual/common/topics/customize-user-web-pages.html#customize-user-web-pages-nav-links
 
-# The URL neeeds to something like http://localhost:8081/simpleTopUpBalance/%user%
+# The URL neeeds to something like http://localhost:8081/simpleTopUpBalance/%user%?return_url=https%3A%2F%2Fgoogle.com
 
 # This code is basic example only. It will require work before it can be used for production
 
@@ -20,38 +20,53 @@ import sys
 # Bottle does not depend on any external libraries.
 # You can just download bottle.py into your project directory and using
 # $ wget http://bottlepy.org/bottle.py
-from bottle import route, run, template, request, debug
+from bottle import route, run, template, request, debug, redirect
 
 
 # Prefer HTTPS connection
-host="http://localhost:9191/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
-auth="token"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
+# If not localhost then this address will need to be whitelisted in PaperCut
+host = "http://localhost:9191/rpc/api/xmlrpc"
+auth = "token"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
 
 proxy = xmlrpc.client.ServerProxy(host)
+
+redirect_url = ''
+
 
 @route('/')
 def wrongUrl():
     return("Please log into PaperCut and set top up your account from there")
 
+
 @route('/simpleTopUpBalance/<user>')
 def promptUser(user):
-
+    # Redirect user to login page
+    return_url = request.query.get("return_url")
+    if return_url is None:
+        return ("No return url provided, please return to PaperCut and try again")
+    else:
+        # Should probably verify URL is in correct format here
+        global redirect_url
+        redirect_url = return_url
     if not proxy.api.isUserExists(auth, user):
         return("Can't find user {}".format(user))
 
-    return template('promptForDeposit',user=user)
+    return template('promptForDeposit', user=user)
+
 
 @route('/topUp/<user>')
 def topUp(user):
-    if request.GET.get('cancel','').strip():
+    if request.query.get('cancel', '').strip():
         return "Cancelled"
 
-    amount = float(request.GET.get('amount','').strip())
+    amount = float(request.query.get('amount', '').strip())
 
-    proxy.api.adjustUserAccountBalance(auth, user, amount, "Money added by the Simple Top Up Page");
+    proxy.api.adjustUserAccountBalance(
+        auth, user, amount, "Money added by the Simple Top Up Page")
 
-    return 'Updated balance is now {}<br><br>Please close this tab/window and return to PaperCut'.format(
-            proxy.api.getUserAccountBalance(auth,user))
+    print('Updated balance is now {}. Returning user to {}'.format(
+        proxy.api.getUserAccountBalance(auth, user), redirect_url))
+    redirect(redirect_url)
+
 
 run(host='localhost', port=8081, debug=True, reloader=True)
-
