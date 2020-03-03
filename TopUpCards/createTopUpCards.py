@@ -12,9 +12,10 @@ from datetime import date, timedelta
 from random import sample, seed
 from pdfdocument.document import PDFDocument
 import locale
+import os
 
 #Modify to suite
-locale.setlocale(locale.LC_ALL, '')
+locale.setlocale(locale.LC_ALL, (os.environ["LANG"], "UTF-8")
 
 
 template = """

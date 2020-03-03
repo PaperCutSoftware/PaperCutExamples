@@ -43,10 +43,13 @@ except xmlrpc.client.ProtocolError as error:
     exit(1)
 
 status = proxy.api.getTaskStatus()
+lineCount = 0
 while not status["completed"]:
     sleep(3) # Wait three seconds so server is not overloaded
     print(".",end="", flush=True)  # Show the user something is happing
+    print("\nStatus: {}\t Message: {}".format(status['completed'],status['message'].splitlines()[lineCount]))
     status = proxy.api.getTaskStatus()
+    lineCount += 1
 
 # Only want the last line of messages
 last=status["message"].splitlines()[-1]

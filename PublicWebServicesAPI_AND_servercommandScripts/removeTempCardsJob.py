@@ -7,7 +7,7 @@ import sys
 
 host="http://localhost:9191/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
 
-auth="password"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
+auth="atoken"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
 
 proxy = xmlrpc.client.ServerProxy(host)
 

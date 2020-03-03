@@ -12,7 +12,7 @@ $n = 0
 
 #Query to retrieve list of printers. Drops the template printer and devices. Replaces \ with space
 
-$parameters = 'list-printers | Out-String -Stream |Select-String -Pattern "^((?!!!|device).)*$" | ForEach-Object {$_ -Replace "\\"," "}'
+$parameters = 'list-printers | Select-String -Pattern "^((?!!!|device).)*$" | ForEach-Object {$_ -Replace "\\"," "}'
 
 #Run the command and put it in $result
 

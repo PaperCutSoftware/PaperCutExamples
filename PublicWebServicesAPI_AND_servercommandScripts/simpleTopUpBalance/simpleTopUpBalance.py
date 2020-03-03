@@ -10,7 +10,7 @@
 
 # https://www.papercut.com/products/ng/manual/common/topics/customize-user-web-pages.html#customize-user-web-pages-nav-links
 
-# The URL neeeds to something like http://localhost:8081/simpleTopUpBalance/%user%
+# The URL neeeds to something like http://localhost:8081/simpleTopUpBalance/?user=%user%&return_url=%return_url%
 
 # This code is basic example only. It will require work before it can be used for production
 
@@ -20,7 +20,7 @@ import sys
 # Bottle does not depend on any external libraries.
 # You can just download bottle.py into your project directory and using
 # $ wget http://bottlepy.org/bottle.py
-from bottle import route, run, template, request, debug
+from bottle import route, run, template, request, debug, response
 
 
 # Prefer HTTPS connection
@@ -33,25 +33,46 @@ proxy = xmlrpc.client.ServerProxy(host)
 def wrongUrl():
     return("Please log into PaperCut and set top up your account from there")
 
-@route('/simpleTopUpBalance/<user>')
-def promptUser(user):
+@route('/simpleTopUpBalance/')
+def promptUser():
 
-    if not proxy.api.isUserExists(auth, user):
+    user = request.query.user or ""
+
+    return_url = request.query.return_url or ""
+    
+    if len(user) == 0 or not proxy.api.isUserExists(auth, user):
         return("Can't find user {}".format(user))
 
-    return template('promptForDeposit',user=user)
+    return template('promptForDeposit',user=user, return_url=return_url)
 
-@route('/topUp/<user>')
-def topUp(user):
-    if request.GET.get('cancel','').strip():
-        return "Cancelled"
+@route("/topUp/")
+def topUp(method="GET"):
 
-    amount = float(request.GET.get('amount','').strip())
+    return_url = request.query.return_url or None
+
+    if request.query.cancel == "cancel":
+        if return_url is None:
+            return "Cancelled. Please close this tab/window and return to PaperCut"
+        else:
+            response.set_header("Refresh", "5; url={}".format(return_url))
+            return "Cancelled. You will be returned to PaperCut in 5s"
+
+    user = request.query.user
+
+    amount = float(request.query.amount)
+
+    if not amount > 0.0: # Example of data validation -- not used because our form already does this one
+        return template('promptForDeposit',user=user, return_url=return_url, error_text="Invalid amount \"{}\" entered".format(amount))
 
     proxy.api.adjustUserAccountBalance(auth, user, amount, "Money added by the Simple Top Up Page");
 
-    return 'Updated balance is now {}<br><br>Please close this tab/window and return to PaperCut'.format(
+    if len(return_url) == 0:
+        return "Updated balance is now {}<br><br>Please close this tab/window and return to PaperCut".format(
+            proxy.api.getUserAccountBalance(auth,user))
+
+    # Add refresh with 5s timeout back to PaperCut MF/NG
+    response.set_header("Refresh", "5; url={}".format(return_url))
+    return "Updated balance is now {}<br><br>You will be returned to PaperCcut in 5s".format(
             proxy.api.getUserAccountBalance(auth,user))
 
 run(host='localhost', port=8081, debug=True, reloader=True)
-
