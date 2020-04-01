@@ -16,11 +16,9 @@ $BATCH_SIZE = 100
 $(do {
     [array]$userList = $s.ListUserAccounts($intCounter, $BATCH_SIZE)
     Write-Output $userList
-    $intCounter += $BATCH_SIZE;
+    $intCounter += $BATCH_SIZE
 } while ($userList.Length -eq $BATCH_SIZE) ) | ForEach-Object {
 
-        $primary = $s.GetUserProperty($_, "secondary-card-number");
-        $secondary = $s.GetUserProperty($_, "primary-card-number");
-        $s.SetUserProperty($_, "primary-card-number", $primary);
-        $s.SetUserProperty($_, "secondary-card-number", $secondary);
+        $cardNumbers = $s.GetUserProperties($_, @("secondary-card-number","primary-card-number"))
+        $s.SetUserProperties($_, @(@("primary-card-number", $cardNumbers[0]), @("secondary-card-number", $cardNumbers[1])))
 }

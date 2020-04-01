@@ -31,11 +31,11 @@ while True:
 
     for user in userList:
         try:
-            primary = proxy.api.getUserProperty(auth, user, "secondary-card-number")
-            secondary = proxy.api.getUserProperty(auth, user, "primary-card-number")
-            proxy.api.setUserProperty(auth, user, "primary-card-number", primary)
-            proxy.api.setUserProperty(auth, user, "secondary-card-number", secondary)
-
+            (primary, secondary) = proxy.api.getUserProperties(auth, user, ("secondary-card-number","primary-card-number"))
+            proxy.api.setUserProperties(auth, user, (("primary-card-number", primary),("secondary-card-number", secondary)))
+        except xmlrpc.client.Fault as error:
+            print("\n{}".format(error.faultString))
+            sys.exit(1)
         except:
             print("\nSomething went wrong. Return fault is {}".format(sys.exc_info()[0]))
             sys.exit(1)
