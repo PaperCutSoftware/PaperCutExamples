@@ -18,7 +18,6 @@ $(do {
     Write-Output $userList
     $intCounter += $BATCH_SIZE
 } while ($userList.Length -eq $BATCH_SIZE) ) | ForEach-Object {
-
         $cardNumbers = $s.GetUserProperties($_, @("secondary-card-number","primary-card-number"))
         $s.SetUserProperties($_, @(@("primary-card-number", $cardNumbers[0]), @("secondary-card-number", $cardNumbers[1])))
 }
