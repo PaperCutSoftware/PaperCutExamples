@@ -1,0 +1,1 @@
+The material has moved to https://github.com/PaperCutSoftware/MF-NG-Report-Examples
