@@ -10,6 +10,8 @@ It designed to support MFD based release stations, as explained at
 
 https://www.papercut.com/support/resources/manuals/ng-mf/applicationserver/topics/device-mf-copier-integration-release-multiple-operating-systems.html
 
+Note: Needs PaperCut MF 2.0.3 or above
+
 For simplicity this script configures a single hold release queue with multiple MFD queues. It can be extended for more
 complex requirements
 
