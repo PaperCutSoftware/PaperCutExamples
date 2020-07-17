@@ -1,4 +1,4 @@
-# Call the PaperCut XML-RPC web servies API from C
+# Call the PaperCut XML-RPC web services API from C
 
 This very simple example shows how to use the xmlrpc-c
 library to call a PaperCut server.
