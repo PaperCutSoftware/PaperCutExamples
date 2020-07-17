@@ -18,7 +18,7 @@
  Will list users who have already expired, or will expire in the next "how_soon" days
 """ 
 
-from  xmlrpc.client import ServerProxy, Fault
+from  xmlrpc.client import ServerProxy, Fault, ProtocolError
 from ssl import create_default_context, Purpose
 from sys import exit, argv
 from re import compile
@@ -53,10 +53,10 @@ def list_users(how_soon):
             #calls listUserAccount method of the API
             #return list of users
             user_list = proxy.api.listUserAccounts(auth_token, offset,limit)
-        except xmlrpc.client.Fault as error:
+        except Fault as error:
             print("\ncalled listUserAccounts(). Return fault is {}".format(error.faultString))
             exit(1)
-        except xmlrpc.client.ProtocolError as error:
+        except ProtocolError as error:
             print("\nA protocol error occurred\nURL: {}\nHTTP/HTTPS headers: {}\nError code: {}\nError message: {}".format(
                 error.url, error.headers, error.errcode, error.errmsg))
             exit(1)
