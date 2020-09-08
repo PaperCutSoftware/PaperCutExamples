@@ -40,7 +40,7 @@ func init() {
 				log.Fatal("PaperCut not installed")
 			}
 
-			serverCommandBin = filepath.Join(installRoot, "server", "bin", "linux_x64", "server-command")
+			serverCommandBin = filepath.Join(installRoot, "server", "bin", "linux-x64", "server-command")
 		}
 	} else if runtime.GOOS == "darwin" {
 		if _, err := os.Stat("/Applications/PaperCut MF"); err == nil {
@@ -56,6 +56,7 @@ func init() {
 	}
 }
 
+// Note: using server-command binary as we don't know have a value web services auth token yet
 func execServerCommand(args ...string) (value []byte, err error) {
 
 	var out bytes.Buffer
@@ -70,22 +71,23 @@ func execServerCommand(args ...string) (value []byte, err error) {
 	return
 }
 
-// Note: using server-command binary as we don't know have a value web services auth token yet
 func getConfig(key string) (value []byte, err error) {
 	return execServerCommand("get-config", key)
 }
 
-func setConfig(key string, value string) (err error) {
-	_, err = execServerCommand("set-config", key, value)
-	return err
+func setConfig(key string, value string) (out string, err error) {
+	output, err := execServerCommand("set-config", key, value)
+	return string(output), err
 }
 
 func update(jsonData interface{}) {
 	if value, err := json.Marshal(jsonData); err != nil {
 		log.Fatalf("could not marshal %v", jsonData)
 	} else {
-		setConfig("auth.webservices.auth-token", string(value))
-		log.Printf("Updated with new token value %v", jsonData)
+		if output, err := setConfig("auth.webservices.auth-token", string(value)); err != nil {
+			log.Fatalf("Failed to update auth.webservices.auth-token: %v", output)
+		}
+		log.Printf("Updated auth.webservices.auth-token with new token value %v", jsonData)
 	}
 }
 
@@ -119,30 +121,6 @@ func main() {
 		return
 	}
 
-	var tokensAsObject map[string]string
-
-	if json.Valid(result) != true {
-		log.Printf("auth.webservices.auth-token is a simple string")
-
-		tokensAsObject = make(map[string]string)
-		tokensAsObject["default"] = string(result) // Save the old auth key as well
-		tokensAsObject[tokenName] = securityToken
-
-		update(tokensAsObject)
-
-		return
-	}
-
-	if err := json.Unmarshal(result, &tokensAsObject); err == nil {
-		log.Printf("auth.webservices.auth-token is a json object %v", tokensAsObject)
-
-		tokensAsObject[tokenName] = securityToken
-
-		update(tokensAsObject)
-
-		return
-	}
-
 	var tokensAsArray []string
 
 	// Note: if the config key is not an array of strings this parse will fail
@@ -157,9 +135,29 @@ func main() {
 		}
 
 		update(append(tokensAsArray, securityToken))
+		return
+	}
+
+	var tokensAsObject map[string]string
+
+	if err := json.Unmarshal(result, &tokensAsObject); err == nil {
+		log.Printf("auth.webservices.auth-token is a json object %v", tokensAsObject)
+
+		tokensAsObject[tokenName] = securityToken
+
+		update(tokensAsObject)
 
 		return
 	}
 
-	log.Fatal("Cannot parse setting")
+	// Assume it's a simple string
+	log.Printf("auth.webservices.auth-token is a simple string")
+
+	tokensAsObject = make(map[string]string)
+	tokensAsObject["default"] = string(result) // Save the old auth key as well
+	tokensAsObject[tokenName] = securityToken
+
+	update(tokensAsObject)
+
+	return
 }
