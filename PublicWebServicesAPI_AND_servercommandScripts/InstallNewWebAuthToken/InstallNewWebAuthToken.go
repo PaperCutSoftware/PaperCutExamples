@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -14,9 +13,8 @@ import (
 )
 
 // Edit to suit -- helps PaperCut admin know what this is for
-const tokenName = "integration-auth"
 
-var cmdBin string
+var serverCommandBin string
 
 func init() {
 
@@ -31,7 +29,7 @@ func init() {
 		} else {
 			log.Fatal("PaperCut MF/NG installation not found")
 		}
-		cmdBin = filepath.Join(installRoot, "server", "bin", "win", "server-command.exe")
+		serverCommandBin = filepath.Join(installRoot, "server", "bin", "win", "server-command.exe")
 
 	} else if runtime.GOOS == "linux" {
 		if papercutAdmin, err := user.Lookup("papercut"); err != nil {
@@ -42,7 +40,7 @@ func init() {
 				log.Fatal("PaperCut not installed")
 			}
 
-			cmdBin = filepath.Join(installRoot, "server", "bin", "linux_x64", "server-command")
+			serverCommandBin = filepath.Join(installRoot, "server", "bin", "linux_x64", "server-command")
 		}
 	} else if runtime.GOOS == "darwin" {
 		if _, err := os.Stat("/Applications/PaperCut MF"); err == nil {
@@ -52,30 +50,43 @@ func init() {
 		} else {
 			log.Fatal("PaperCut not installed")
 		}
-		cmdBin = filepath.Join(installRoot, "server", "bin", "macos", "server-command")
+		serverCommandBin = filepath.Join(installRoot, "server", "bin", "macos", "server-command")
 	} else {
 		log.Fatalf("Runtime platform %v not supported", runtime.GOOS)
 	}
 }
 
-// Note: using server-command binary as we don't know have a value web services auth token yet
-func getConfig(key string) (value []byte, err error) {
-	cmd := exec.Command(cmdBin, "get-config", key)
+func execServerCommand(args ...string) (value []byte, err error) {
+
 	var out bytes.Buffer
+
+	cmd := exec.Command(serverCommandBin, args...)
 	cmd.Stdout = &out
-	log.Printf("Running command %v and waiting for it to finish...", cmdBin)
+	log.Printf("Running command %v and waiting for it to finish...", append([]string{serverCommandBin}, args...))
+
 	err = cmd.Run()
 	value = []byte(strings.TrimSpace(out.String()))
-	return value, err
+
+	return
+}
+
+// Note: using server-command binary as we don't know have a value web services auth token yet
+func getConfig(key string) (value []byte, err error) {
+	return execServerCommand("get-config", key)
 }
 
 func setConfig(key string, value string) (err error) {
-	cmd := exec.Command(cmdBin, "set-config", key, value)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	log.Printf("Running command %v and waiting for it to finish... (setting %v to %v", cmdBin, key, value)
-	err = cmd.Run()
+	_, err = execServerCommand("set-config", key, value)
 	return err
+}
+
+func update(jsonData interface{}) {
+	if value, err := json.Marshal(jsonData); err != nil {
+		log.Fatalf("could not marshal %v", jsonData)
+	} else {
+		setConfig("auth.webservices.auth-token", string(value))
+		log.Printf("Updated with new token value %v", jsonData)
+	}
 }
 
 func main() {
@@ -83,11 +94,14 @@ func main() {
 	var result []byte
 	var err error
 
-	if len(os.Args) == 1 {
-		log.Fatal("Auth key value not supplied")
+	if len(os.Args) != 3 {
+		log.Fatal("Auth key and value not supplied")
 	}
 
-	securityToken := os.Args[1]
+	tokenName := os.Args[1]
+	securityToken := os.Args[2]
+
+	log.Printf("Adding key %v, value %v", tokenName, securityToken)
 
 	if result, err = getConfig("auth.webservices.auth-token"); err != nil {
 		log.Fatalf("Failed getConfig result=%v, err = %v", result, err)
@@ -100,45 +114,35 @@ func main() {
 		auth := make(map[string]string)
 		auth[tokenName] = securityToken
 
-		if value, err := json.Marshal(auth); err != nil {
-			log.Fatalf("could not marshal %v", auth)
-		} else {
-			setConfig("auth.webservices.auth-token", string(value))
-			fmt.Printf("Updated with new token value %v", auth)
-			return
-		}
-	}
+		update(auth)
 
-	if json.Valid(result) != true {
-		log.Printf("auth.webservices.auth-token is a simple string")
-
-		tokensAsObject := make(map[string]string)
-		tokensAsObject[tokenName] = securityToken
-		tokensAsObject["default"] = string(result)
-
-		if value, err := json.Marshal(tokensAsObject); err != nil {
-			log.Fatalf("could not marshal %v", tokensAsObject)
-		} else {
-			setConfig("auth.webservices.auth-token", string(value))
-			fmt.Printf("Updated with new token value %v", string(value))
-			return
-		}
+		return
 	}
 
 	var tokensAsObject map[string]string
 
+	if json.Valid(result) != true {
+		log.Printf("auth.webservices.auth-token is a simple string")
+
+		tokensAsObject = make(map[string]string)
+		tokensAsObject["default"] = string(result) // Save the old auth key as well
+		tokensAsObject[tokenName] = securityToken
+
+		update(tokensAsObject)
+
+		return
+	}
+
 	if err := json.Unmarshal(result, &tokensAsObject); err == nil {
-		fmt.Printf("auth.webservices.auth-token is a json object %v", tokensAsObject)
+		log.Printf("auth.webservices.auth-token is a json object %v", tokensAsObject)
 
 		tokensAsObject[tokenName] = securityToken
-		if value, err := json.Marshal(tokensAsObject); err != nil {
-			log.Fatalf("could not marshal %v", tokensAsObject)
-		} else {
-			setConfig("auth.webservices.auth-token", string(value))
-			fmt.Printf("Updated with new token value %v", string(value))
-			return
-		}
+
+		update(tokensAsObject)
+
+		return
 	}
+
 	var tokensAsArray []string
 
 	// Note: if the config key is not an array of strings this parse will fail
@@ -152,13 +156,9 @@ func main() {
 			}
 		}
 
-		if value, err := json.Marshal(append(tokensAsArray, securityToken)); err != nil {
-			log.Fatalf("could not marshal %v", append(tokensAsArray, securityToken))
-		} else {
-			setConfig("auth.webservices.auth-token", string(value))
-			fmt.Printf("Updated with new token value %v", string(value))
-			return
-		}
+		update(append(tokensAsArray, securityToken))
+
+		return
 	}
 
 	log.Fatal("Cannot parse setting")
