@@ -12,8 +12,6 @@ import (
 	"strings"
 )
 
-// Edit to suit -- helps PaperCut admin know what this is for
-
 var serverCommandBin string
 
 func init() {
