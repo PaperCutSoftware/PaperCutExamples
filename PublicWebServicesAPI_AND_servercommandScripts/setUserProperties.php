@@ -13,7 +13,7 @@ $user = "alec";
 
 function do_call($request) {
   
-  $url = "http://localhost:9191/rpc/api/xmlrpc";
+  $url = "http://172.18.48.1:9191/rpc/api/xmlrpc";
   $header[] = "Content-type: text/xml";
   $header[] = "Content-length: ".strlen($request);
   
@@ -40,7 +40,11 @@ $request = xmlrpc_encode_request("api.setUserProperties",
                           array( "primary-card-number", "8888"),
                           array("secondary-card-number", "9999"))));
 
+$request = xmlrpc_encode_request("api.setUserAccountBalance", array($auth, $user, 44.0,"test"));						  
+
 $r = do_call($request);
+
+print($r);
 
 $response = xmlrpc_decode($r);
 

@@ -13,10 +13,8 @@ import (
 	"strings"
 )
 
-const (
-	tokenName     = "mf-proxy"
-	securityToken = "wpr98um09w4qcpsalfnvaqwpoaxe"
-)
+// Edit to suit -- helps PaperCut admin know what this is for
+const tokenName = "integration-auth"
 
 var cmdBin string
 
@@ -85,11 +83,17 @@ func main() {
 	var result []byte
 	var err error
 
+	if len(os.Args) == 1 {
+		log.Fatal("Auth key value not supplied")
+	}
+
+	securityToken := os.Args[1]
+
 	if result, err = getConfig("auth.webservices.auth-token"); err != nil {
 		log.Fatalf("Failed getConfig result=%v, err = %v", result, err)
 	}
 
-	log.Printf("result: %q\n", result)
+	log.Printf("result: %q", result)
 
 	if len(result) == 0 {
 
@@ -100,7 +104,7 @@ func main() {
 			log.Fatalf("could not marshal %v", auth)
 		} else {
 			setConfig("auth.webservices.auth-token", string(value))
-			fmt.Printf("Updated with new token value")
+			fmt.Printf("Updated with new token value %v", auth)
 			return
 		}
 	}
@@ -108,26 +112,12 @@ func main() {
 	if json.Valid(result) != true {
 		log.Printf("auth.webservices.auth-token is a simple string")
 
-		auth := make(map[string]string)
-		auth[tokenName] = securityToken
-		auth["default"] = string(result)
+		tokensAsObject := make(map[string]string)
+		tokensAsObject[tokenName] = securityToken
+		tokensAsObject["default"] = string(result)
 
-		if value, err := json.Marshal(auth); err != nil {
-			log.Fatalf("could not marshal %v", auth)
-		} else {
-			setConfig("auth.webservices.auth-token", string(value))
-			fmt.Printf("Updated with new token value %v", string(value))
-			return
-		}
-	}
-
-	var tokensAsArray []string
-
-	if err := json.Unmarshal(result, &tokensAsArray); err == nil {
-		log.Printf("auth.webservices.auth-token is a json array %v", tokensAsArray)
-
-		if value, err := json.Marshal(append(tokensAsArray, securityToken)); err != nil {
-			log.Fatalf("could not marshal %v", append(tokensAsArray, securityToken))
+		if value, err := json.Marshal(tokensAsObject); err != nil {
+			log.Fatalf("could not marshal %v", tokensAsObject)
 		} else {
 			setConfig("auth.webservices.auth-token", string(value))
 			fmt.Printf("Updated with new token value %v", string(value))
@@ -146,6 +136,30 @@ func main() {
 		} else {
 			setConfig("auth.webservices.auth-token", string(value))
 			fmt.Printf("Updated with new token value %v", string(value))
+			return
 		}
 	}
+	var tokensAsArray []string
+
+	// Note: if the config key is not an array of strings this parse will fail
+	if err := json.Unmarshal(result, &tokensAsArray); err == nil {
+		log.Printf("auth.webservices.auth-token is a json array %v", tokensAsArray)
+
+		for _, i := range tokensAsArray {
+			if i == securityToken {
+				log.Printf("Security token %v already installed", i)
+				return
+			}
+		}
+
+		if value, err := json.Marshal(append(tokensAsArray, securityToken)); err != nil {
+			log.Fatalf("could not marshal %v", append(tokensAsArray, securityToken))
+		} else {
+			setConfig("auth.webservices.auth-token", string(value))
+			fmt.Printf("Updated with new token value %v", string(value))
+			return
+		}
+	}
+
+	log.Fatal("Cannot parse setting")
 }
