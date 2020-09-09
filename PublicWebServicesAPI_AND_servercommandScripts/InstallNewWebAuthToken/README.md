@@ -11,9 +11,16 @@ auth.webservices.auth-token
 The key can be configured using the `server-command` utility.
 
 This Go program is designed to be compiled and shipped with a third party
-integration so that a new security token can be installed ay config
+integration so that a new security token can be installed at install
 time.
 
 NOTE: This program must be run on the PaperCut MF/NG server under the PaperCut or admin/root account
 
-It should work on Windows, MacOS and Linux. But you should test thoroughly
+It should work on Windows, MacOS and Linux. But you should test thoroughly as I didn't have
+access to MacOS or Linux.
+
+To run the program
+
+```
+InstallNewWebAuthToken <integrationName>  <tokenvalue>
+```
