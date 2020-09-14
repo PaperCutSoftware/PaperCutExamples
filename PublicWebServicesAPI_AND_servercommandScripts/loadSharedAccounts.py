@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # Load a lot of data and use getTaskStatus()
 
@@ -20,9 +20,9 @@ fileName = "/tmp/import.file"
 f = open(fileName, 'w')
 
 for p in range(20):
-    f.write("parentAccount{0:02}\t\tY\tPPx{0:02}\t10.0\tN\t[All Users]\t\t\t\t\n".format(p))
-    for a in range(100):
-        f.write("{0:02}LongParentAccountname\t{1:02}ReallyLongSharedAccountName\t\t{0:02}x{1:02}\t10.0\t\t\t[All Users]\t\t\t\n".format(p, a))
+    f.write("parentAccount{0:03}\t\tY\tPPx{0:03}\t10.0\tN\t[All Users]\t\t\t\t\n".format(p))
+    for a in range(500):
+        f.write("{0:03}LongParentAccountname\t{1:03}ReallyLongSharedAccountName\t\t{0:03}x{1:03}\t10.0\t\t\t[All Users]\t\t\t\n".format(p, a))
 
 f.close()
 print("Data Import file created")
