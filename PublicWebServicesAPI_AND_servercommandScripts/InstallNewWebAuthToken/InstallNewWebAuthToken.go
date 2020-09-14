@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -20,13 +21,18 @@ func init() {
 
 	if runtime.GOOS == "windows" {
 
-		if _, err := os.Stat("C:\\Program Files\\PaperCut MF"); err == nil {
-			installRoot = "C:\\Program Files\\PaperCut MF"
-		} else if _, err := os.Stat("C:\\Program Files\\PaperCut NG"); err == nil {
-			installRoot = "C:\\Program Files\\PaperCut NG"
-		} else {
-			log.Fatal("PaperCut MF/NG installation not found")
+		programFiles := os.Getenv("PROGRAMFILES")
+
+		installRoot := fmt.Sprintf("%s\\PaperCut MF", programFiles)
+		if _, err := os.Stat(installRoot); err != nil {
+
+			installRoot = fmt.Sprintf("%s\\PaperCut NG", programFiles)
+
+			if _, err := os.Stat(fmt.Sprintf("%s\\PaperCut NG", programFiles)); err != nil {
+				log.Fatal("PaperCut MF/NG installation not found")
+			}
 		}
+
 		serverCommandBin = filepath.Join(installRoot, "server", "bin", "win", "server-command.exe")
 
 	} else if runtime.GOOS == "linux" {
@@ -40,6 +46,7 @@ func init() {
 
 			serverCommandBin = filepath.Join(installRoot, "server", "bin", "linux-x64", "server-command")
 		}
+
 	} else if runtime.GOOS == "darwin" {
 		if _, err := os.Stat("/Applications/PaperCut MF"); err == nil {
 			installRoot = "/Applications/PaperCut MF"
@@ -122,7 +129,7 @@ func main() {
 	var tokensAsArray []string
 
 	// Note: if the config key is not an array of strings this parse will fail
-	if err := json.Unmarshal(result, &tokensAsArray); err == nil {
+	if notAnArray := json.Unmarshal(result, &tokensAsArray); notAnArray == nil {
 		log.Printf("auth.webservices.auth-token is a json array %v", tokensAsArray)
 
 		for _, i := range tokensAsArray {
@@ -138,7 +145,8 @@ func main() {
 
 	var tokensAsObject map[string]string
 
-	if err := json.Unmarshal(result, &tokensAsObject); err == nil {
+	// Note: if the config key is not a map of strings indexed by strings this parse will fail
+	if notAnObject := json.Unmarshal(result, &tokensAsObject); notAnObject == nil {
 		log.Printf("auth.webservices.auth-token is a json object %v", tokensAsObject)
 
 		tokensAsObject[tokenName] = securityToken
