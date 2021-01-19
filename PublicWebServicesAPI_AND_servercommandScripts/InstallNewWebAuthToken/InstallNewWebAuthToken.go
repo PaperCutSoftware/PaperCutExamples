@@ -15,6 +15,7 @@ import (
 
 var serverCommandBin string
 
+// Before we do anything let's find the localtion of the server-command binary
 func init() {
 
 	var installRoot string
@@ -76,23 +77,14 @@ func execServerCommand(args ...string) (value []byte, err error) {
 	return
 }
 
-func getConfig(key string) (value []byte, err error) {
-	return execServerCommand("get-config", key)
-}
-
-func setConfig(key string, value string) (out string, err error) {
-	output, err := execServerCommand("set-config", key, value)
-	return string(output), err
-}
-
 func update(jsonData interface{}) {
 	if value, err := json.Marshal(jsonData); err != nil {
 		log.Fatalf("could not marshal %v", jsonData)
 	} else {
-		if output, err := setConfig("auth.webservices.auth-token", string(value)); err != nil {
+		if output, err := execServerCommand("set-config", "auth.webservices.auth-token", string(value)); err != nil {
 			log.Fatalf("Failed to update auth.webservices.auth-token: %v", output)
 		}
-		log.Printf("Updated auth.webservices.auth-token with new token value %v", jsonData)
+		log.Printf("Updated auth.webservices.auth-token with new token value %v", value)
 	}
 }
 
@@ -110,11 +102,9 @@ func main() {
 
 	log.Printf("Adding key %v, value %v", tokenName, securityToken)
 
-	if result, err = getConfig("auth.webservices.auth-token"); err != nil {
+	if result, err = execServerCommand("get-config", "auth.webservices.auth-token"); err != nil {
 		log.Fatalf("Failed getConfig result=%v, err = %v", result, err)
 	}
-
-	log.Printf("result: %q", result)
 
 	if len(result) == 0 {
 

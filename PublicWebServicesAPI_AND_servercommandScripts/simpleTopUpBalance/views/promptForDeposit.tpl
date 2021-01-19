@@ -1,4 +1,28 @@
-%#template to generate a HTML form from a list
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {
+  background-color: linen;
+}
+
+h1 {
+  color: maroon;
+  margin-left: 40px;
+}
+
+em {
+    color: red;
+}
+
+</style>
+</head>
+<body>
+
+<h1>Shonky Soft Payment Portal</h1>
+
+
+%# Enter a deposit ammount
 
 % if defined("error_text"):
     <em>{{error_text}}</em><br/><br/>
@@ -20,3 +44,6 @@ Note: Minimum deposit is 0.05, maximum is 10.00 and only multiples of 0.05 may b
     <input type="hidden" name="return_url" value="{{return_url}}">
 
 </form>
+</p>
+</body>
+</html>

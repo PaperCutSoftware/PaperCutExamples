@@ -11,9 +11,9 @@ use RPC::XML::Client;
 
 use strict;
 
-my $server = "localhost"; my $port="9191";
+my $server = "172.31.240.1"; my $port="9192";
 my $token = "password";
-my $url = "http://${server}:${port}/rpc/api/xmlrpc";
+my $url = "https://${server}:${port}/rpc/api/xmlrpc";
 
 my $client = RPC::XML::Client->new($url);
 

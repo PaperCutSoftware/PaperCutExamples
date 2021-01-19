@@ -8,7 +8,7 @@ import xmlrpc.client
 from ssl import create_default_context, Purpose
 import sys
 
-host="https://localhost:9192/rpc/api/xmlrpc" # If not localhost then the client address will need to be whitelisted in PaperCut
+host="http://localhost:9191/rpc/api/xmlrpc" # If not localhost then the client address will need to be whitelisted in PaperCut
 
 auth="secret"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
 

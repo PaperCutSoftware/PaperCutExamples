@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-# Small webb app to allow a user to top up thier personal PaperCut balance
+# Small web app to allow a user to top up their personal PaperCut balance
 
 # Add a custom URL to the PaperCut user web page, which is used by end users
 # when they want to add credit to their PaperCut personal account. The url
@@ -12,6 +12,9 @@
 
 # The URL neeeds to something like http://localhost:8081/simpleTopUpBalance/?user=%user%&return_url=%return_url%
 
+# Generally additional security should be provided. For example if the URL is http://localhost:8081/promptForPassword/?user=%user%&return_url=%return_url%
+# then the user will need to enter their PaperCut password to access the payment system
+
 # Handy Tip: By default the link will open in a separate winodow. You can edit the advanced config property user.web.custom-links and
 # change "_body" to "_self". You should then use the %return_url% to return the user to the PaperCut MF/NG web interface
 
@@ -19,6 +22,9 @@
 
 import xmlrpc.client
 import sys
+from json import load as loadjs
+import logging
+import traceback
 
 # Bottle does not depend on any external libraries.
 # You can just download bottle.py into your project directory and using
@@ -33,6 +39,11 @@ auth = "token"  # Value defined in advanced config property "auth.webservices.au
 
 proxy = xmlrpc.client.ServerProxy(host)
 
+# For more information on this user database file refer to the custom auth and sync demo
+paperCutAccountInfoFile = 'c:\\Program Files\\PaperCut MF\\server\\custom\\config.json'
+
+paperCutAccountData = {}
+
 # The user is sent back to the Summary page as if they had just logged in,
 # assuming their session has not timed out
 # Therefore return url should be consistent
@@ -43,17 +54,37 @@ redirect_url = ''
 def wrongUrl():
     return("Please log into PaperCut and set top up your account from there")
 
-@route('/simpleTopUpBalance/')
+
+@route('/promptForPassword/')
+def prompForPassword():
+
+    user = request.query.user or ""
+
+    try:
+        if len(user) == 0 or not proxy.api.isUserExists(auth, user):
+            return( "Can't find user {}".format(user))
+    except Exception as e:
+        logging.error(traceback.format_exc())
+    
+    return_url = request.query.return_url or ""
+
+    return template( 'promptForPassword', user=user, return_url=return_url)
+
+@route('/simpleTopUpBalance/', method='GET')
 def promptUser():
 
     user = request.query.user or ""
 
     return_url = request.query.return_url or ""
-    
-    if len(user) == 0 or not proxy.api.isUserExists(auth, user):
-        return("Can't find user {}".format(user))
 
-    return template('promptForDeposit',user=user, return_url=return_url)
+    password = request.query.password or ""
+
+    if paperCutAccountData is None or paperCutAccountData['userdata'][user]['password'] == password:
+        return template('promptForDeposit',user=user, return_url=return_url)
+
+    # Password validation failed    
+    return template( 'promptForPassword', user=user, error_text="Invalid password entered", return_url=return_url)
+
 
 @route("/topUp/")
 def topUp(method="GET"):
@@ -85,5 +116,11 @@ def topUp(method="GET"):
     response.set_header("Refresh", "5; url={}".format(return_url))
     return "Updated balance is now {}<br><br>You will be returned to PaperCcut in 5s".format(
             proxy.api.getUserAccountBalance(auth,user))
+
+try:
+    with open(paperCutAccountInfoFile) as f:
+        paperCutAccountData = loadjs(f)
+except OSError:
+    paperCutAccountData = None
 
 run(host='localhost', port=8081, debug=True, reloader=True)

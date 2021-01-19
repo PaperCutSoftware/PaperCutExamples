@@ -26,12 +26,15 @@ $uri = [Uri]"http://localhost:9191/api/health"
   $rsp = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers
 
 
-  $rsp.applicationServer.systemInfo |
-  ConvertTo-Html -As List -Fragment -PreContent '<h2>PaperCut Services Info</h2>'
+#  $rsp.applicationServer.systemInfo |
+#  ConvertTo-Html -As List -Fragment -PreContent '<h2>PaperCut Services Info</h2>'
+
+  $rsp.license.devices | ConvertTo-Html -As List -Fragment -PreContent '<h2>License Info</h2>'
+# $rsp.devices | ConvertTo-Html -As List -Fragment -PreContent '<h2>Device Info</h2>'
 
 
-  Write-Output "<p>Total Printers = $($rsp.printers.count)</p>"
-  Write-Output "<p>Total Devices = $($rsp.devices.count)</p>"
+#  Write-Output "<p>Total Printers = $($rsp.printers.count)</p>"
+#  Write-Output "<p>Total Devices = $($rsp.devices.count)</p>"
  } | Out-File -FilePath .\report1.html
 
 
