@@ -10,8 +10,6 @@ from datetime import date, timedelta
 
 host = "https://localhost:9192/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
 
-host = "https://172.28.0.1:9192/rpc/api/xmlrpc" # If not localhost then this address will need to be whitelisted in PaperCut
-
 auth = "token"  # Value defined in advanced config property "auth.webservices.auth-token". Should be random
 
 accountExpiry =  10 # No of days before an new account is deleted.
