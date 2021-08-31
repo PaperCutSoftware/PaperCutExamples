@@ -1,8 +1,6 @@
 # PaperCutExamples
 
-[![Join the chat at https://gitter.im/PaperCutSoftware/PaperCutExamples](https://badges.gitter.im/PaperCutSoftware/PaperCutExamples.svg)](https://gitter.im/PaperCutSoftware/PaperCutExamples?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-We also recommend joining the mail support group at
+We recommend joining the mail support group at
 https://groups.google.com/forum/#!forum/papercut-webservices-api
 
 This repository contains various examples of scripts and other things that PaperCut users may find useful.
