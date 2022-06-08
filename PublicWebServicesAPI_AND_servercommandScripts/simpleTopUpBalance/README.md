@@ -12,5 +12,6 @@ The XML-RPC public web services API has a method call `api.adjustUserAccountBala
 4. The user is re-directed to the custom payment service page via the configured URL. This solution would manage the payment process and, once approved, the solution has the responsibility of calling the local PaperCut XML-RPC service with the user name and credit adjustment `api.adjustUserAccountBalance()`
 
 
-Note: If the XML-RPC call is coming to PaperCut from across the network it is necessary to whitelist the remote address in
+Note: If the XML-RPC call is coming to PaperCut from across the network it is necessary to allow list the remote address in
 the PaperCut admin interface.
+
