@@ -7,10 +7,11 @@ The XML-RPC public web services API has a method call `api.adjustUserAccountBala
 2. Add a custom URL to the PaperCut user web page, which is used by end users when they want to top up their PaperCut account.
 3. When the user clicks on the URL link in the PaperCut user web page to the payment service, the user identification details is passed as part of the URL. This is explained at:
 
-      http://www.papercut.com/products/ng/manual/ch-customization-user-web-pages.html#Additional-Links-in-the-Navigation-Menu
+      https://www.papercut.com/support/resources/manuals/ng-mf/common/topics/customize-user-web-pages.html#customize-user-web-pages-nav-links
 
 4. The user is re-directed to the custom payment service page via the configured URL. This solution would manage the payment process and, once approved, the solution has the responsibility of calling the local PaperCut XML-RPC service with the user name and credit adjustment `api.adjustUserAccountBalance()`
 
 
-Note: If the XML-RPC call is coming to PaperCut from across the network it is necessary to whitelist the remote address in
+Note: If the XML-RPC call is coming to PaperCut from across the network it is necessary to allow list the remote address in
 the PaperCut admin interface.
+

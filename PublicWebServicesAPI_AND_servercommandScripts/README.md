@@ -1,4 +1,4 @@
-# Various scritps and programs that use server-command or web services API.
+# Various scripts and programs that use server-command or web services API.
 
 For more information about using `server-command` or the web services API see our
 knowledge base [article](https://www.papercut.com/kb/Main/TopTipsForUsingThePublicWebServicesAPI)
