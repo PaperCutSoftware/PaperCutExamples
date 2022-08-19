@@ -8,36 +8,25 @@
 
 # This example uses xmllint, jq and the glab (the GitLab command line client). They will need to be installled
 
-API_TOKEN="$(cat ~/.PAPERCUT_API_TOKEN)"  # Dont' hard code API tokens
 MF_HOST="$(hostname).local" # Modify to suit
-LAST_VERSION_CHECKED="0.0.0" # Default to never checked
 PRODUCT=mf # Changing to "ng" should work, but has not been tested
+PRODUCT_UPCASE=$(echo $PRODUCT | tr [a-z] [A-Z]) # Sometimes we need upper case version
+GH_REPO="PaperCutSoftware/PaperCutExamples"
 
-if [ -e ~/.PAPERCUT_LAST_VERSION_CHECKED ] ; then
-  LAST_VERSION_CHECKED=$(cat ~/.PAPERCUT_LAST_VERSION_CHECKED)
-fi
+# ID of system admin to review releases
+MINION=alecthegeek
 
-echo last version checked is $LAST_VERSION_CHECKED
 
-# Discover the latest PaperCut MF release from the papercut.com atom feed
-# Note: Using an older version of xmllint so sed needs to add a new line to each version line
-CURRENT_RELEASE=$(curl -sL http://www.papercut.com/products/$PRODUCT/release-history.atom |
-xmllint --xpath "//*[local-name()='feed']/*[local-name()='entry']/*[local-name()='id']/text()" - |
-sed -Ene 's/tag:papercut.com,[0-9]+-[0-9]+-[0-9]+:'$PRODUCT'\/releases\/v([0-9]+)-([0-9]+)-([0-9]+)/\1.\2.\3\
-/gp' |
-sort -rV | head -1)
+# We need the config health.api.key value
+# Assume we are on the PaperCut MF server and use server-command (NB Needs to run under the correct user)
+if ! HEALTH_API_KEY=$(~papercut/server/linux-x64/bin/server-command get-config-value health.api.key) ; then
 
-echo $CURRENT_RELEASE > ~/.PAPERCUT_LAST_VERSION_CHECKED
+  # Can't use server-command. Get via it the web services API.
 
-if [ "$LAST_VERSION_CHECKED" = "$CURRENT_RELEASE" ] ; then
-  echo No new release
-#  exit 0
-fi
+  # Need a web services API token.Get this from your local PaperCut admin 
+  API_TOKEN="$(cat ~/.PAPERCUT_API_TOKEN)"  # Dont' hard code API tokens
 
-echo Found a new release.
-
-# We need the health API key. Get via the web services API. Config health.api.key
-HEALTH_API_KEY=$(curl -s -H "content-type:text/xml"  "http://${MF_HOST}:9191/rpc/api/xmlrpc" --data  @-  <<EOF | xmllint --xpath '//*/value/text()' -
+  HEALTH_API_KEY=$(curl -s -H "content-type:text/xml"  "http://${MF_HOST}:9191/rpc/api/xmlrpc" --data  @-  <<EOF | xmllint --xpath '//*/value/text()' -
 <?xml version="1.0"?>
 <methodCall>
 <methodName>api.getConfigValue</methodName>
@@ -52,9 +41,7 @@ HEALTH_API_KEY=$(curl -s -H "content-type:text/xml"  "http://${MF_HOST}:9191/rpc
 </methodCall>
 EOF
 )
-
-# If running on the PaperCut MF server this approach is much easier
-# HEALTH_API_KEY=$(~papercut/server/linux-x64/bin/server-command get-config-value health.api.key)
+fi
 
 if [ -z "$HEALTH_API_KEY" ] ; then
   echo HEALTH_API_KEY not found
@@ -63,21 +50,41 @@ fi
 
 INSTALLED_RELEASE=$(curl -s -H "Authorization:$HEALTH_API_KEY" "http://${MF_HOST}:9191/api/health" | jq '.applicationServer.systemInfo.version' |sed -Ee 's/^"([0-9]+\.[0-9]+\.[0-9]+).+$/\1/')
 
-if [ "$INSTALLED_RELEASE" = "$CURRENT_RELEASE" ] ; then
-  echo No new release, $INSTALLED_RELEASE is up to date
-#  exit 0
+# Discover the latest PaperCut MF release from the papercut.com atom feed
+CURRENT_RELEASE=$(curl -sL http://www.papercut.com/products/$PRODUCT/release-history.atom |
+  xmllint --xpath "//*[local-name()='feed']/*[local-name()='entry'][1]/*[local-name()='id']/text()"  - |
+  sed -Ene 's/tag:papercut.com,[0-9]{4}-[0-9]{2}-[0-9]{2}:'$PRODUCT'\/releases\/v([0-9]+)-([0-9]+)-([0-9]+)/\1.\2.\3/gp')
+
+echo Latest PaperCut release is $CURRENT_RELEASE. Installed Release is $INSTALLED_RELEASE
+
+#Default
+LAST_VERSION_CHECKED=$INSTALLED_RELEASE
+
+if [ -e ~/LAST_VERSION_CHECKED ] ;then
+  LAST_VERSION_CHECKED=$(cat ~/LAST_VERSION_CHECKED) # Override default
 fi
 
-echo Installed Release is $INSTALLED_RELEASE, $CURRENT_RELEASE is now avaliable. Upgrade possible
+if [ "$LAST_VERSION_CHECKED" = "$CURRENT_RELEASE" ] ; then
+  echo PaperCut $PRODUCT_UPCASE $CURRENT_RELEASE  already checked. Nothing to do here
+  exit 0
+fi
+
+if [ "$INSTALLED_RELEASE" = "$CURRENT_RELEASE" ] ; then
+  echo Installed release $INSTALLED_RELEASE is already up to date. No new update available 
+  exit 0
+fi
+
+echo PaperCut $PRODUCT_UPCASE $INSTALLED_RELEASE can be upgraded to $CURRENT_RELEASE
 
 MAJOR="$(echo $CURRENT_RELEASE  | cut -d . -f 1)"
 MINOR="$(echo $CURRENT_RELEASE  | cut -d . -f 2)"
-PATCH="$(echo $CURRENT_RELEASE  | cut -d . -f 3)"
+FIX="$(echo $CURRENT_RELEASE  | cut -d . -f 3)"
 
-RELEASE_NOTES="https://www.papercut.com/products/$PRODUCT/release-history/${MAJOR}-${MINOR}/#v${MAJOR}-${MINOR}-${PATCH}"
+RELEASE_NOTES="https://www.papercut.com/products/$PRODUCT/release-history/${MAJOR}-${MINOR}/#v${MAJOR}-${MINOR}-${FIX}"
 
-MINION=alecthegeek
+# Use appropriate API for your ticket system
+GH_TOKEN=$(cat ~/.GITHUB_ACCESS_TOKEN) gh issue -R $GH_REPO create -a $MINION \
+   -t "Review PaperCut $PRODUCT_UPCASE $INSTALLED_RELEASE upgrade to version $CURRENT_RELEASE" \
+   -b "Review release notes at $RELEASE_NOTES"
 
-# Need to install a repo client to create job ticket, or use appropriate API on your ticket system
-glab issue create -a $MINION -t "Investigate Possible PaperCUt $(echo $PRODUCT | tr [a-z] [A-Z]) upgrade to version $CURRENT_RELEASE" -d "Review release notes at $RELEASE_NOTES.
-Note installed release is $INSTALLED_RELEASE"
+echo -n $CURRENT_RELEASE > ~/LAST_VERSION_CHECKED
