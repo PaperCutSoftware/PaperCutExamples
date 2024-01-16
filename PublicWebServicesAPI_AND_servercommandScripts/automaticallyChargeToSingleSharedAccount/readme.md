@@ -1,4 +1,4 @@
-In PaperCut NG or MF, you have the option to charge all of the activity performed by a specific user to a single shared account. This option can be found under **Users** > **<select-user>** > **Account Selection**.
+In PaperCut NG or MF, you have the option to charge all of the activity performed by a specific user to a single shared account. This option can be found under **Users** > **Select a user** > **Account Selection**.
 Once this option is selected, a specific shared account can be specified for user activity to be charged against. 
 
 This PowerShell example uses our server-command utility to set this setting for specific users as specified in an accompanying CSV file. 
