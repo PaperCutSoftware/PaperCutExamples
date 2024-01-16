@@ -15,4 +15,6 @@ The CSV file should be in the following format:
 | harold   | English   |
 | jane     | French    |
 
-This script is designed to be executed on the PaperCut NG or MF Application Server
+This script is designed to be executed on the PaperCut NG or MF Application Server.
+
+Please note that you may need to adjust or bypass the script Execution Policy on the server before any PowerShell scripts can be executed successfully. 
