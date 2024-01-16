@@ -1,9 +1,8 @@
 # Navigate to the location of the server-command executable. 
-# For more information on server-command, see https://www.papercut.com/help/manuals/ng-mf/common/tools-server-command/
 cd "C:\Program Files\PaperCut MF\server\bin\win"
 
 # Set the location of the CSV file contain the user to shared account mappings.
-$data = Import-CSV -Path C:\users\installer\desktop\set-account-data.csv -Delimiter ";"
+$data = Import-CSV -Path C:\users\installer\desktop\example-csv.csv -Delimiter ";"
 
 # We will run through each record in the CSV and set the user to 'Automatically charge to a single shared account' and assign the relevant account. 
 $data | ForEach {
