@@ -1,0 +1,5 @@
+Zone Name,Display Name,Groups,IP Range,Hostname Regex
+Zone1,Display1,"staff,papercut",,
+Zone2,,,192.168.2.1-192.168.2.10,
+Zone3,Display3,,"192.168.1.1-192.168.1.10,192.168.0.0/24",
+Zone4,Display4,staff,192.168.4.1-192.168.4.10,(?i)frontdesk
