@@ -183,18 +183,18 @@ if __name__ == "__main__":
             displayname = row['Display Name']
             groups = read_list_from_string(row['Groups'])
             ipRange = read_list_from_string(row['IP Range'])
+            ipRange = ["0.0.0.0-255.255.255.255"] if not ipRange else ipRange #If ipRanga is empty, replace it with ["0.0.0.0-255.255.255.255"]
             hostnameRegex = row['Hostname Regex']
-
+            hostnameRegex = None if not hostnameRegex.strip() else hostnameRegex #Value of null will be sent via JSON if cell is empty 
             #Prep data that will be posted to Print Deploy to create or edit a zone
             data = {
                     'groups': groups,
                     'ipRange': ipRange,
-                    'name': row['Zone Name'],
-                    'displayName': row['Display Name']
+                    'name': zonename,
+                    'displayName': displayname,
+                    'hostnameRegex': hostnameRegex
+
             }
-            #Check if hostname regex exists, only then include it in the data. 
-            if hostnameRegex.strip() != '':
-                data['hostnameRegex'] = hostnameRegex
 
             zone_already_exists = any(zone.get('name') == zonename for zone in existing_zones)
             if zone_already_exists and args.edit:
