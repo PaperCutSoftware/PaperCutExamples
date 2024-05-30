@@ -1,3 +1,7 @@
+#
+# (c) Copyright 1999-2024 PaperCut Software International Pty Ltd.
+#
+
 import requests
 import csv
 import argparse
