@@ -6,7 +6,7 @@ These Python scripts can be used to create zones in Print Deploy and assign prin
 * [Python requests](https://pypi.org/project/requests/)
 
 
-## How to create zones ##
+# How to create zones #
 See the example zones.csv file. 
 
 Don't edit the headings. 
@@ -38,3 +38,29 @@ Example for Windows: `create_zones.py zones.csv --username admin --password pass
 | `-P`, `--port`        | Port number for the connection. If not set, then '9192' is used.                                              |
 | `--host`                   | Host address for the connection. If not set, then 'localhost' is used. |
 
+# How to assign print queues to zones #
+See the example printers_to_zones_example.csv file. 
+
+Don't edit the headings. 
+
+* Zone Name: Which zone to connect the print queue to.
+* Print Queue: The print queue name to connect
+* Optional: If set to 'true', then this print queue will be connected as optional to the zone. 
+
+### How to run script ###
+Example when importing from a CSV file. This example will update the Optional value if the print queue was already deployed: `python3 assign_print_queues_to_zones.py -f printers_to_zones_example.csv --edit`
+
+### Optional Arguments ###
+Choose whether you'll import the print queue to zone assignment from a CSV, or provide a single print queue via arguments.
+
+| Option                      | Description                                                                                           |
+|-----------------------------|-------------------------------------------------------------------------------------------------------|
+| `-p, --password` | Password for authentication                                                                          |
+| `-u, --username` | Username for authentication                                                                          |
+| `-P, --port`      | Port number for the connection                                                                        |
+| `--host`               | Host name for the connection                                                                          |
+| `-f, --file`      | The CSV input file to process.                                                                        |
+| `--printer`         | If `--printer` argument is present, a single printer will be assigned to the zone specified by `--zone`.|
+| `-z, --zone`      | The zone the single printer (`--printer`) will be connected to.                                        |
+| `-o, --optional`            | If set, then the single printer (`--printer`) will be connected to the zone (`--zone`) as optional.    |
+| `-e, --edit`                | If set, then the optional flag will be updated if a print queue is already deployed to a zone.        |
