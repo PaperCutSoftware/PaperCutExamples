@@ -1,30 +1,41 @@
 import requests
 import csv
+import argparse
 import sys
 import json
 
-#Update these. Only implemented this script for HTTP as an example
-host_name = 'localhost' 
-port = 9191
 
 #Global variables
 session = None
+printers_ids = None
+zones = None
 
-def login():
+
+# Suppress warnings for self-signed certificates. Remove this code in environments where CA-signed certificates are used. 
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+#The script will default to these values are not specified. Don't edit these in the script, rather provide them through input arguments. Run "python 3 create_zones.py --help"
+host_name = 'localhost' 
+port = 9192
+password = "password"
+username = "admin"
+
+def login(username,password):
     #Get SessionID
     global session 
     session = requests.Session()
     # First request to get the session cookies
-    response = session.get("http://{}:{}/admin".format(host_name,port))
+    response = session.get("https://{}:{}/admin".format(host_name,port), verify=False)
 
     # Define the URL
-    url = 'http://{}:{}/app'.format(host_name,port)
+    url = 'https://{}:{}/app'.format(host_name,port)
 
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "Content-Type": "application/x-www-form-urlencoded",
-        "Host": "localhost:9191",
-        "Referer": "http://{}:{}/admin".format(host_name,port),
+        "Host": "{}:{}".format(host_name,port),
+        "Referer": "https://{}:{}/admin".format(host_name,port),
     }
 
 
@@ -35,18 +46,23 @@ def login():
         "Form0": "$Hidden$0,$Hidden$1,inputUsername,inputPassword,$Submit$0,$PropertySelection",
         "$Hidden$0": "true",
         "$Hidden$1": "X",
-        "inputUsername": "admin",
-        "inputPassword": "password",
+        "inputUsername": username,
+        "inputPassword": password,
         "$Submit$0": "Log in",
         "$PropertySelection": "en"
     }
 
-    response = session.post(url, headers=headers, data=body)
+    response = session.post(url, headers=headers, data=body, verify=False)
 
     # Check the response
     if response.status_code == 200 or response.status_code == 302:
-        print("Login was successful")
-        return True
+        # Check if the response contains the string "Login"
+        if "Login" in response.text:
+            print("Username or password not correct")
+            return False
+        else:
+            print("Login was successful")
+            return True
     else:
         print("Request failed with status code %s" % response.status_code)
         return False
@@ -57,13 +73,13 @@ def get_data(path):
 #############
 
 # Define the URL
-    url = 'http://{}:{}{}'.format(host_name,port,path) 
+    url = 'https://{}:{}{}'.format(host_name,port,path) 
 
     # Define the headers
     headers = {'Content-Type': 'application/json'}
 
     # Send the POST request
-    response = session.get(url, headers=headers)
+    response = session.get(url, headers=headers, verify=False)
     # Check the response
     if response.status_code == 200:
         return response.json()   
@@ -75,50 +91,33 @@ def post_data(path,data):
 #############
 
 # Define the URL
-    url = 'http://{}:{}{}'.format(host_name,port,path) 
+    url = 'https://{}:{}{}'.format(host_name,port,path) 
 
     # Define the headers
     headers = {'Content-Type': 'application/json'}
 
     # Send the POST request
-    response = session.post(url, headers=headers, data=json.dumps(data))
-    if response.status_code == 200 or response.status_code == 302:
+    response = session.post(url, headers=headers, data=json.dumps(data), verify=False)
+    if response.status_code == 200 or response.status_code == 302 or response.status_code == 201:
         return True  
     else:
         print("Request to '{}' failed with status code {}".format(path,response.status_code))
         return False
 
+# Assign print queue to Zone
+'''
+def connect_print_queue_to_zone(zone_name,new_print_queue_name,optional):
+    global zones
+    global printers_ids
 
-if __name__ == "__main__":
-    # Check the number of command-line arguments
-    if len(sys.argv) != 3:
-        print("Usage: python3 assign_print_queues_to_zone.py print_queue_name zone_name")
-        sys.exit(1)
-    new_print_queue_name = sys.argv[1] 
-    zone_name = sys.argv[2]
-
-    zone_id = None
-    printers_ids = {}
     zone={}
-    zone_print_queues = []
-
-    if not login():
-        print("Exiting: Couldn't login")
-        sys.exit(1)
-
-    #Retrieve all printer IDS    
-    printers = get_data("/print-deploy/admin/api/printQueues")
-    for i in printers:
-        printers_ids[i["name"]]=i["key"]
-
-    #Retrieve zones and connected print queues
-    zones = get_data("/print-deploy/admin/api/zones")
 
     for zone in zones:
         if zone["name"] == zone_name:
             print("Found zone {}".format(zone_name))
             zone_id = zone["id"]
             zone_print_queues = zone["zonePrintQueues"]
+            #Temporarily setting is_print_queue_already_connected to false. Will change to true if found.
             is_print_queue_already_connected = False
             for print_queue in zone_print_queues:
                 if print_queue.get("key") == printers_ids.get(new_print_queue_name):
@@ -126,10 +125,135 @@ if __name__ == "__main__":
                     is_print_queue_already_connected = True
             if not is_print_queue_already_connected:
                 print("Deploying printer {} to {}.".format(new_print_queue_name,zone_name))
-                zone_print_queues.append({'key': printers_ids[new_print_queue_name], 'optional': True, 'defaultPrinter': False})
+                zone_print_queues.append({'key': printers_ids[new_print_queue_name], 'optional': optional, 'defaultPrinter': False})
 
             payload = {"printQueues":zone_print_queues}
             post_data("/print-deploy/admin/api/zones/{}/printQueues".format(zone_id),payload)
+'''
+# Assign print queue to Zone
+def connect_print_queue_to_zone(zone_name, new_print_queue_name, optional, edit=False):
+    global zones
+    global printers_ids
+
+    for zone in zones:
+        if zone["name"] == zone_name:
+            print("Found zone {}".format(zone_name))
+            zone_id = zone["id"]
+            zone_print_queues = zone["zonePrintQueues"]
+            is_print_queue_already_connected = False
+            
+            # Check if the print queue already exists in the zone
+            for i, print_queue in enumerate(zone_print_queues):
+                if print_queue.get("key") == printers_ids.get(new_print_queue_name):
+                    is_print_queue_already_connected = True
+                    if edit:
+                        # Replace the matching print queue
+                        print("Editing printer {} in {}.".format(new_print_queue_name, zone_name))
+                        zone_print_queues[i] = {'key': printers_ids[new_print_queue_name], 'optional': optional, 'defaultPrinter': False}
+                    else:
+                        print("Printer {} is already deployed to {}.".format(new_print_queue_name, zone_name))
+                    break
+
+            if not is_print_queue_already_connected:
+                print("Deploying printer {} to {}.".format(new_print_queue_name, zone_name))
+                zone_print_queues.append({'key': printers_ids[new_print_queue_name], 'optional': optional, 'defaultPrinter': False})
+
+            payload = {"printQueues": zone_print_queues}
+            post_data("/print-deploy/admin/api/zones/{}/printQueues".format(zone_id), payload)
+            break
+
+# Example usage
+# connect_print_queue_to_zone('Zone1', 'Printer1', True, edit=True)
+
+
+if __name__ == "__main__":
+
+
+    # Create the argument parser
+    parser = argparse.ArgumentParser(description='Create zones based on CSV.')
+
+    # Add input arguments
+    parser.add_argument('-p', '--password', type=str, help='Password for authentication')
+    parser.add_argument('-u', '--username', type=str, help='Username for authentication')
+    parser.add_argument('-P', '--port', type=int, help='Port number for the connection')
+    parser.add_argument('--host', type=str, help='Port number for the connection')
+    parser.add_argument('-f','--file', type=str, help='The CSV input file to process.')
+    parser.add_argument('--printer', help='If --printer argument is present, a single printer will be assigned to to the zone specified by --zone. ')
+    parser.add_argument('-z','--zone', help='The zone the single printer (--printer) will be connected to.')
+    parser.add_argument('-o','--optional',action='store_true',help='If set, then the single printer (--printer) will be connected to the zone (--zone) as optional. ')
+    parser.add_argument('-e','--edit',action='store_true',help='If set, then the optional flag will be updated if a print queue is already deployed to a zone.')
+
+    # Parse the command line arguments
+    args = parser.parse_args()
+
+    #Default password to "password" if not set
+    if args.password:
+        password = args.password
+    else:
+        print("Password not set. Using 'password' as default password. Set password with --password input argument.")
+
+    #Default username to "admin" if not set
+    if args.username:
+        username = args.username
+    else:
+        print("Username not set. Using 'admin' as default username. Set username with --username input argument.")
+
+    #Default host to "localhost" if not set
+    if args.host:
+        host_name = args.host
+    else:
+        print("Host not set. Using 'localhost' as default host. Set host with --host input argument.'")
+
+    #Default port to "9192" if not set
+    if args.port:
+        port = args.port
+    else:
+        print("Port not set. Using 9192 as default port. Set port with --port input argument.'")
+
+    #Setting optional variable. This won't be used for a CSV import, only when one specific print queue is imported. 
+    optional = args.optional
+
+    #If set, then the optional flag will be updated if a print queue is already deployed to a zone.
+    edit = args.edit
+
+    zone_id = None
+    printers_ids = {}
+    zone_print_queues = []
+
+
+    if not login(username,password):
+        print("Exiting: Couldn't login")
+        sys.exit(1)
+    #############
+
+    #Retrieve zones and connected print queues
+    zones = get_data("/print-deploy/admin/api/zones")
+
+    #Retrieve all printer IDS    
+    printers = get_data("/print-deploy/admin/api/printQueues")
+    for i in printers:
+        printers_ids[i["name"]]=i["key"]
+
+    #If print queue name and zone are provided through arguments
+    if args.printer and args.zone:
+        new_print_queue_name = args.printer 
+        zone_name = args.zone
+        connect_print_queue_to_zone(zone_name,new_print_queue_name,optional,edit)
+
+    #If CSV file provided
+    if args.file:
+        csv_file_path = args.file
+        print(f"Processing file '{csv_file_path}'")
+        # Read data from the CSV file
+        with open(csv_file_path, mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                zone_name = row['Zone Name']
+                new_print_queue_name = row['Print Queue']
+                optional = row['Optional'].strip().lower() == 'true'
+                connect_print_queue_to_zone(zone_name,new_print_queue_name,optional,edit)            
+
+
 
 
 

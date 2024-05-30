@@ -57,8 +57,13 @@ def login(username,password):
 
     # Check the response
     if response.status_code == 200 or response.status_code == 302:
-        print("Login was successful")
-        return True
+        # Check if the response contains the string "Login"
+        if "Login" in response.text:
+            print("Username or password not correct")
+            return False
+        else:
+            print("Login was successful")
+            return True
     else:
         print("Request failed with status code %s" % response.status_code)
         return False
@@ -124,7 +129,7 @@ if __name__ == "__main__":
     parser.add_argument('-P', '--port', type=int, help='Port number for the connection')
     parser.add_argument('--host', type=str, help='Port number for the connection')
 
-    # Add two required positional arguments
+    # Add required positional arguments
     parser.add_argument('csv_file_path', type=str, help='The CSV input file to process')
 
     # Parse the command line arguments
