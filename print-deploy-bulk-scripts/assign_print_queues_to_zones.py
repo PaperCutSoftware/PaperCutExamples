@@ -109,32 +109,6 @@ def post_data(path,data):
         return False
 
 # Assign print queue to Zone
-'''
-def connect_print_queue_to_zone(zone_name,new_print_queue_name,optional):
-    global zones
-    global printers_ids
-
-    zone={}
-
-    for zone in zones:
-        if zone["name"] == zone_name:
-            print("Found zone {}".format(zone_name))
-            zone_id = zone["id"]
-            zone_print_queues = zone["zonePrintQueues"]
-            #Temporarily setting is_print_queue_already_connected to false. Will change to true if found.
-            is_print_queue_already_connected = False
-            for print_queue in zone_print_queues:
-                if print_queue.get("key") == printers_ids.get(new_print_queue_name):
-                    print("Printer {} is already deployed to {}.".format(new_print_queue_name,zone_name))
-                    is_print_queue_already_connected = True
-            if not is_print_queue_already_connected:
-                print("Deploying printer {} to {}.".format(new_print_queue_name,zone_name))
-                zone_print_queues.append({'key': printers_ids[new_print_queue_name], 'optional': optional, 'defaultPrinter': False})
-
-            payload = {"printQueues":zone_print_queues}
-            post_data("/print-deploy/admin/api/zones/{}/printQueues".format(zone_id),payload)
-'''
-# Assign print queue to Zone
 def connect_print_queue_to_zone(zone_name, new_print_queue_name, optional, edit=False):
     global zones
     global printers_ids
@@ -166,9 +140,41 @@ def connect_print_queue_to_zone(zone_name, new_print_queue_name, optional, edit=
             post_data("/print-deploy/admin/api/zones/{}/printQueues".format(zone_id), payload)
             break
 
-# Example usage
-# connect_print_queue_to_zone('Zone1', 'Printer1', True, edit=True)
+#Export current print queue to zone config
+def export_print_queues_and_zones(output_file):
+    global zones 
+    global printers_ids
+    
+    # Reverse the printer_ids dictionary for easy lookup
+    printer_keys = {v: k for k, v in printers_ids.items()}
 
+    # Track assigned printers
+    assigned_printers = set()
+
+    # Prepare CSV data
+    csv_data = [["Zone Name", "Print Queue", "Optional"]]
+
+    for zone in zones:
+        zone_name = zone['name']
+        for pq in zone['zonePrintQueues']:
+            if pq['key'] in printer_keys:
+                print_queue = printer_keys[pq['key']]
+                optional = "True" if pq.get('optional', False) else ""
+                csv_data.append([zone_name, print_queue, optional])
+                assigned_printers.add(pq['key'])
+        if not zone['zonePrintQueues']:
+            csv_data.append([zone_name, "", ""])
+
+    # Add unassigned printers
+    unassigned_printers = sorted(set(printers_ids.values()) - assigned_printers)
+    for printer_key in unassigned_printers:
+        printer_name = printer_keys.get(printer_key, '')
+        csv_data.append(["", printer_name, ""])
+
+    # Write to CSV file
+    with open(output_file, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(csv_data)
 
 if __name__ == "__main__":
 
@@ -182,6 +188,7 @@ if __name__ == "__main__":
     parser.add_argument('-P', '--port', type=int, help='Port number for the connection')
     parser.add_argument('--host', type=str, help='Port number for the connection')
     parser.add_argument('-f','--file', type=str, help='The CSV input file to process.')
+    parser.add_argument('--output', type=str, help='Download CSV file with current print queue assignment. Useful to edit and import again.')
     parser.add_argument('--printer', help='If --printer argument is present, a single printer will be assigned to to the zone specified by --zone. ')
     parser.add_argument('-z','--zone', help='The zone the single printer (--printer) will be connected to.')
     parser.add_argument('-o','--optional',action='store_true',help='If set, then the single printer (--printer) will be connected to the zone (--zone) as optional. ')
@@ -238,6 +245,10 @@ if __name__ == "__main__":
     for i in printers:
         printers_ids[i["name"]]=i["key"]
 
+    #Export current config 
+    if args.output:
+        export_print_queues_and_zones(args.output)
+
     #If print queue name and zone are provided through arguments
     if args.printer and args.zone:
         new_print_queue_name = args.printer 
@@ -252,10 +263,12 @@ if __name__ == "__main__":
         with open(csv_file_path, mode='r') as file:
             reader = csv.DictReader(file)
             for row in reader:
-                zone_name = row['Zone Name']
-                new_print_queue_name = row['Print Queue']
+                zone_name = row['Zone Name'].strip()
+                new_print_queue_name = row['Print Queue'].strip()
                 optional = row['Optional'].strip().lower() == 'true'
-                connect_print_queue_to_zone(zone_name,new_print_queue_name,optional,edit)            
+                #Check if zone name and print queue name not empty. 
+                if zone_name and new_print_queue_name: 
+                    connect_print_queue_to_zone(zone_name,new_print_queue_name,optional,edit)            
 
 
 
