@@ -187,7 +187,7 @@ if __name__ == "__main__":
     parser.add_argument('-u', '--username', type=str, help='Username for authentication')
     parser.add_argument('-P', '--port', type=int, help='Port number for the connection')
     parser.add_argument('--host', type=str, help='Port number for the connection')
-    parser.add_argument('-f','--file', type=str, help='The CSV input file to process.')
+    parser.add_argument('-f','file', type=str, help='The CSV input file to process.')
     parser.add_argument('--output', type=str, help='Download CSV file with current print queue assignment. Useful to edit and import again.')
     parser.add_argument('--printer', help='If --printer argument is present, a single printer will be assigned to to the zone specified by --zone. ')
     parser.add_argument('-z','--zone', help='The zone the single printer (--printer) will be connected to.')
