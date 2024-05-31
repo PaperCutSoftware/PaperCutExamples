@@ -65,7 +65,7 @@ Choose whether you'll import the print queue to zone assignment from a CSV, or p
 | `-P, --port`      | Port number for the connection                                                                                  |
 | `--host`               | Host name for the connection                                                                               |
 | `-f, --file`      | The CSV input file to process.                                                                                  |
-| `-o, --output`      | Download CSV file with current print queue assignment. Useful to edit and import again.                       |
+| `--output`      | Download CSV file with current print queue assignment. Useful to edit and import again.                       |
 | `--printer`         | If `--printer` argument is present, a single printer will be assigned to the zone specified by `--zone`.      |
 | `-z, --zone`      | The zone the single printer (`--printer`) will be connected to.                                                 |
 | `-o, --optional`            | If set, then the single printer (`--printer`) will be connected to the zone (`--zone`) as optional.   |
