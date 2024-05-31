@@ -40,7 +40,7 @@ Example for Windows: `create_zones.py zones.csv --username admin --password pass
 
 # How to assign print queues to zones #
 Reference the zones.csv exmaple in this repo, or download your current zones and print queues to a CSV file by running:
-`python3 assign_print_queues_to_zones.py --output output.csv`
+`python3 assign_print_queues_to_zones.py --output output.csv  --username admin --password password --host localhost --port 9192`
 
 This output CSV file will be compatible to import again. At the bottom of the CSV file print queues will be listed that are not yet connected to any zones. To assign them to zones, simply fill in the zone name and then run:
 
@@ -53,7 +53,7 @@ Don't edit the headings for the following columns:
 * Optional: If set to 'true', then this print queue will be connected as optional to the zone. 
 
 ### How to run script ###
-Example when importing from a CSV file. This example will update the Optional value if the print queue was already deployed: `python3 assign_print_queues_to_zones.py -f printers_to_zones_example.csv --edit`
+Example when importing from a CSV file. This example will update the Optional value if the print queue was already deployed: `python3 assign_print_queues_to_zones.py  --username admin --password password --host localhost --port 9192 -f printers_to_zones_example.csv --edit`
 
 ### Optional Arguments ###
 Choose whether you'll import the print queue to zone assignment from a CSV, or provide a single print queue via arguments.
