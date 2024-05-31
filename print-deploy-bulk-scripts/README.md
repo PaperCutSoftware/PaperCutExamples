@@ -39,9 +39,14 @@ Example for Windows: `create_zones.py zones.csv --username admin --password pass
 | `--host`                   | Host address for the connection. If not set, then 'localhost' is used. |
 
 # How to assign print queues to zones #
-See the example printers_to_zones_example.csv file. 
+Reference the zones.csv exmaple in this repo, or download your current zones and print queues to a CSV file by running:
+`python3 assign_print_queues_to_zones.py --output output.csv`
 
-Don't edit the headings. 
+This output CSV file will be compatible to import again. At the bottom of the CSV file print queues will be listed that are not yet connected to any zones. To assign them to zones, simply fill in the zone name and then run:
+
+`python3 assign_print_queues_to_zones.py -f input.csv --edit` (In this example, the input file was renamed to input.csv)
+
+Don't edit the headings for the following columns:
 
 * Zone Name: Which zone to connect the print queue to.
 * Print Queue: The print queue name to connect
@@ -55,12 +60,13 @@ Choose whether you'll import the print queue to zone assignment from a CSV, or p
 
 | Option                      | Description                                                                                           |
 |-----------------------------|-------------------------------------------------------------------------------------------------------|
-| `-p, --password` | Password for authentication                                                                          |
-| `-u, --username` | Username for authentication                                                                          |
-| `-P, --port`      | Port number for the connection                                                                        |
-| `--host`               | Host name for the connection                                                                          |
-| `-f, --file`      | The CSV input file to process.                                                                        |
-| `--printer`         | If `--printer` argument is present, a single printer will be assigned to the zone specified by `--zone`.|
-| `-z, --zone`      | The zone the single printer (`--printer`) will be connected to.                                        |
-| `-o, --optional`            | If set, then the single printer (`--printer`) will be connected to the zone (`--zone`) as optional.    |
+| `-p, --password` | Password for authentication                                                                                      |
+| `-u, --username` | Username for authentication                                                                                      |
+| `-P, --port`      | Port number for the connection                                                                                  |
+| `--host`               | Host name for the connection                                                                               |
+| `-f, --file`      | The CSV input file to process.                                                                                  |
+| `-o, --output`      | Download CSV file with current print queue assignment. Useful to edit and import again.                       |
+| `--printer`         | If `--printer` argument is present, a single printer will be assigned to the zone specified by `--zone`.      |
+| `-z, --zone`      | The zone the single printer (`--printer`) will be connected to.                                                 |
+| `-o, --optional`            | If set, then the single printer (`--printer`) will be connected to the zone (`--zone`) as optional.   |
 | `-e, --edit`                | If set, then the optional flag will be updated if a print queue is already deployed to a zone.        |
