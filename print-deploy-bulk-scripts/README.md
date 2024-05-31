@@ -44,7 +44,7 @@ Reference the zones.csv exmaple in this repo, or download your current zones and
 
 This output CSV file will be compatible to import again. At the bottom of the CSV file print queues will be listed that are not yet connected to any zones. To assign them to zones, simply fill in the zone name and then run:
 
-`python3 assign_print_queues_to_zones.py -f input.csv --edit` (In this example, the input file was renamed to input.csv)
+`python3 assign_print_queues_to_zones.py -f input.csv --edit --username admin --password password --host localhost --port 9192` (In this example, the input file was renamed to input.csv)
 
 Don't edit the headings for the following columns:
 
