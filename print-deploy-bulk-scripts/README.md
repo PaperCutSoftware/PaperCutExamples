@@ -51,6 +51,7 @@ Don't edit the headings for the following columns:
 * Zone Name: Which zone to connect the print queue to.
 * Print Queue: The print queue name to connect
 * Optional: If set to 'true', then this print queue will be connected as optional to the zone. 
+* Default: If set to 'true', this printer will be the zone's default printer and any previously default printers will be cleared.
 
 ### How to run script ###
 Example when importing from a CSV file. This example will update the Optional value if the print queue was already deployed: `python3 assign_print_queues_to_zones.py  --username admin --password password --host localhost --port 9192 -f printers_to_zones_example.csv --edit`
@@ -69,4 +70,5 @@ Choose whether you'll import the print queue to zone assignment from a CSV, or p
 | `--printer`         | If `--printer` argument is present, a single printer will be assigned to the zone specified by `--zone`.      |
 | `-z, --zone`      | The zone the single printer (`--printer`) will be connected to.                                                 |
 | `-o, --optional`            | If set, then the single printer (`--printer`) will be connected to the zone (`--zone`) as optional.   |
+| -d, --default    |     If set, this printer will be the zone's default printer and any previously default printers will be cleared. |                                         
 | `-e, --edit`                | If set, then the optional flag will be updated if a print queue is already deployed to a zone.        |

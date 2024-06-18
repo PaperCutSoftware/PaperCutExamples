@@ -1,2 +1,2 @@
-Zone Name,Print Queue,Optional
-Zone2,HP_ENVY_Photo_7800_series,True
+Zone Name,Print Queue,Optional,Default
+Zone2,Printer_1,True,
