@@ -1,5 +1,5 @@
 #
-# (c) Copyright 1999-2024 PaperCut Software International Pty Ltd.
+# (c) Copyright 1999-2026 PaperCut Software International Pty Ltd.
 #
 
 import requests
@@ -7,6 +7,7 @@ import csv
 import argparse
 import sys
 import json
+from html.parser import HTMLParser
 
 
 #Global variables
@@ -19,49 +20,74 @@ zones = None
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-#The script will default to these values are not specified. Don't edit these in the script, rather provide them through input arguments. Run "python 3 create_zones.py --help"
+#The script will default to these values if not specified. Don't edit these in the script, rather provide them through input arguments. Run "python3 assign_print_queues_to_zones.py --help"
 host_name = 'localhost' 
 port = 9192
 password = "password"
 username = "admin"
 
+class LoginFormParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.fields = {}
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() == 'input':
+            attr_dict = dict(attrs)
+            name = attr_dict.get('name')
+            field_type = attr_dict.get('type', 'text').lower()
+            field_id = attr_dict.get('id')
+            value = attr_dict.get('value', '')
+
+            if name and field_type in ('hidden', 'submit'):
+                if field_id == 'javascript-enabled':
+                    value = 'true'
+                self.fields[name] = value
+
+# Extracts hidden and submit input fields from the login page HTML to build the authentication payload dynamically.
+def extract_form_fields(html):
+    parser = LoginFormParser()
+    parser.feed(html)
+    return parser.fields
+
 def login(username,password):
     #Get SessionID
     global session 
     session = requests.Session()
-    # First request to get the session cookies
-    response = session.get("https://{}:{}/admin".format(host_name,port), verify=False)
+    try:
+        # First request to get the session cookies
+        response = session.get("https://{}:{}/admin".format(host_name,port), verify=False)
 
-    # Define the URL
-    url = 'https://{}:{}/app'.format(host_name,port)
+        # Define the URL
+        url = 'https://{}:{}/app'.format(host_name,port)
 
-    headers = {
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Host": "{}:{}".format(host_name,port),
-        "Referer": "https://{}:{}/admin".format(host_name,port),
-    }
+        headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Host": "{}:{}".format(host_name,port),
+            "Referer": "https://{}:{}/admin".format(host_name,port),
+        }
 
+        # Build the request body from the fields the server actually rendered, then fill in credentials.
+        body = extract_form_fields(response.text)
+        body["inputUsername"] = username
+        body["inputPassword"] = password
 
-    # Define the request body
-    body = {
-        "service": "direct/1/Home/$Form",
-        "sp": "S0",
-        "Form0": "$Hidden$0,$Hidden$1,inputUsername,inputPassword,$Submit$0,$PropertySelection",
-        "$Hidden$0": "true",
-        "$Hidden$1": "X",
-        "inputUsername": username,
-        "inputPassword": password,
-        "$Submit$0": "Log in",
-        "$PropertySelection": "en"
-    }
+        response = session.post(url, headers=headers, data=body, verify=False)
+    except requests.exceptions.SSLError:
+        print(f"SSL error connecting to https://{host_name}:{port}. Note: PaperCut's default HTTPS port is 9192 (port 9191 is plain HTTP).")
+        return False
+    except requests.exceptions.ConnectionError:
+        print(f"Connection error: Could not connect to {host_name}:{port}. Please check if the host and port are correct and the server is running.")
+        return False
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed: {e}")
+        return False
 
-    response = session.post(url, headers=headers, data=body, verify=False)
-
-    # Check the response
+    # Check the response: On successful login, the server redirects away from the login form to the dashboard.
+    # On failed login, PaperCut re-renders the login page containing the 'inputPassword' field.
     if response.status_code == 200 or response.status_code == 302:
-        # Check if the response contains the string "Login"
-        if "Login" in response.text:
+        if "inputPassword" in response.text:
             print("Username or password not correct")
             return False
         else:
@@ -82,8 +108,13 @@ def get_data(path):
     # Define the headers
     headers = {'Content-Type': 'application/json'}
 
-    # Send the POST request
-    response = session.get(url, headers=headers, verify=False)
+    # Send the GET request
+    try:
+        response = session.get(url, headers=headers, verify=False)
+    except requests.exceptions.RequestException as e:
+        print("Request to '{}' failed: {}".format(path, e))
+        return False
+
     # Check the response
     if response.status_code == 200:
         return response.json()   
@@ -101,7 +132,12 @@ def post_data(path,data):
     headers = {'Content-Type': 'application/json'}
 
     # Send the POST request
-    response = session.post(url, headers=headers, data=json.dumps(data), verify=False)
+    try:
+        response = session.post(url, headers=headers, data=json.dumps(data), verify=False)
+    except requests.exceptions.RequestException as e:
+        print("Request to '{}' failed: {}".format(path, e))
+        return False
+
     if response.status_code == 200 or response.status_code == 302 or response.status_code == 201:
         return True  
     else:
@@ -168,7 +204,7 @@ def export_print_queues_and_zones(output_file):
             if pq['key'] in printer_keys:
                 print_queue = printer_keys[pq['key']]
                 optional = "True" if pq.get('optional', False) else ""
-                default = "True" if pq.get('default', False) else ""
+                default = "True" if (pq.get('defaultPrinter') or pq.get('default')) else ""
                 csv_data.append([zone_name, print_queue, optional, default])
                 assigned_printers.add(pq['key'])
         if not zone['zonePrintQueues']:
@@ -189,13 +225,13 @@ if __name__ == "__main__":
 
 
     # Create the argument parser
-    parser = argparse.ArgumentParser(description='Create zones based on CSV.')
+    parser = argparse.ArgumentParser(description='Assign print queues to zones based on CSV or command line arguments.')
 
     # Add input arguments
     parser.add_argument('-p', '--password', type=str, help='Password for authentication')
     parser.add_argument('-u', '--username', type=str, help='Username for authentication')
     parser.add_argument('-P', '--port', type=int, help='Port number for the connection')
-    parser.add_argument('--host', type=str, help='Port number for the connection')
+    parser.add_argument('--host', type=str, help='Host name or IP address for the connection')
     parser.add_argument('-f','--file', type=str, help='The CSV input file to process.')
     parser.add_argument('--output', type=str, help='Download CSV file with current print queue assignment. Useful to edit and import again.')
     parser.add_argument('--printer', help='If --printer argument is present, a single printer will be assigned to to the zone specified by --zone. ')
