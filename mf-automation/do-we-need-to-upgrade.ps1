@@ -56,8 +56,16 @@ $rsp = Invoke-RestMethod -Uri $URI -Method Get -Headers @{ 'Authorization' = $HE
 $INSTALLED_RELEASE = [System.Version]($rsp.applicationServer.systemInfo.Version -replace '^([\.\d]+).+','$1')
 
 # Get the latest release from the PaperCut website (parse the XML Atom feed)
-$CURRENT_RELEASE = [System.Version]((Invoke-RestMethod -uri http://www.papercut.com/products/mf/release-history.atom).id[0]  `
-        -replace "^tag:papercut.com,[0-9]+-[0-9]+-[0-9]+:$PRODUCT\/releases\/v(\d+)-(\d+)-(\d+)",'$1.$2.$3')
+$releases = Invoke-RestMethod -uri http://www.papercut.com/products/mf/release-history.atom
+# Find the latest release for the Current major version, so updates to older versions are ignored.
+$releases |ForEach-Object {
+        $version = [System.Version]$_.id.Split('/v')[-1].Replace('-','.')
+        if($version -gt $latest.version){
+            $latest = $_
+            $latest | Add-Member -MemberType NoteProperty -Name "version" -Value $version
+        }
+}
+$CURRENT_RELEASE = $latest.version
 
 Write-Host "Latest PaperCut release is $CURRENT_RELEASE. Installed Release is $INSTALLED_RELEASE"
 
